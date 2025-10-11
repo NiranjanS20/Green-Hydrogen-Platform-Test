@@ -1,103 +1,187 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import { Zap, Wind, Droplets, Factory, Database, Truck, BarChart3, FlaskConical, BookOpen, ArrowRight, CheckCircle2, TrendingUp, Shield, Leaf } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+export default function HomePage() {
+  const features = [
+    {
+      icon: <Factory className="w-12 h-12" />,
+      title: "Production Management",
+      description: "Monitor and optimize hydrogen production from PEM, Alkaline, and SOEC electrolyzers with real-time efficiency tracking",
+      color: "from-blue-500 to-cyan-500",
+      href: "/production"
+    },
+    {
+      icon: <Database className="w-12 h-12" />,
+      title: "Storage Solutions",
+      description: "Manage compressed, liquid, and underground storage facilities with pressure and temperature monitoring",
+      color: "from-purple-500 to-pink-500",
+      href: "/storage"
+    },
+    {
+      icon: <Truck className="w-12 h-12" />,
+      title: "Transportation Logistics",
+      description: "Track tube trailers, tankers, and pipeline networks for efficient hydrogen distribution",
+      color: "from-orange-500 to-red-500",
+      href: "/transportation"
+    },
+    {
+      icon: <Wind className="w-12 h-12" />,
+      title: "Renewable Integration",
+      description: "Connect solar, wind, and hydropower sources to green hydrogen production systems",
+      color: "from-green-500 to-emerald-500",
+      href: "/renewable-sources"
+    },
+    {
+      icon: <FlaskConical className="w-12 h-12" />,
+      title: "Process Simulation",
+      description: "Simulate production scenarios with different energy sources and electrolyzer configurations",
+      color: "from-indigo-500 to-blue-500",
+      href: "/simulation"
+    },
+    {
+      icon: <BarChart3 className="w-12 h-12" />,
+      title: "Analytics & Reports",
+      description: "Comprehensive analytics on efficiency, carbon offset, and system performance metrics",
+      color: "from-teal-500 to-cyan-500",
+      href: "/analytics"
+    }
+  ];
+
+  const benefits = [
+    { icon: <Leaf className="w-6 h-6 text-green-600" />, text: "Zero Carbon Emissions" },
+    { icon: <TrendingUp className="w-6 h-6 text-blue-600" />, text: "85% Electrolyzer Efficiency" },
+    { icon: <Shield className="w-6 h-6 text-purple-600" />, text: "Safe Storage & Transport" },
+    { icon: <CheckCircle2 className="w-6 h-6 text-cyan-600" />, text: "Real-time Monitoring" }
+  ];
+
+  const stats = [
+    { value: "10.5 kg", label: "CO₂ Offset per kg H₂", color: "text-green-600" },
+    { value: "39.4 kWh", label: "Energy per kg H₂", color: "text-blue-600" },
+    { value: "700 bar", label: "Max Storage Pressure", color: "text-purple-600" },
+    { value: "90%", label: "SOEC Efficiency", color: "text-orange-600" }
+  ];
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-20 px-4">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-cyan-600/10 to-teal-600/10" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        
+        <div className="relative max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-0">
+              Green Hydrogen Revolution
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+              <span className="gradient-text">Smart Hydrogen</span>
+              <br />
+              Production Platform
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto mb-8">
+              Design, simulate, and optimize green hydrogen production from renewable energy sources like solar, wind, and hydropower
+            </p>
+            
+            <div className="flex flex-wrap gap-4 justify-center mb-12">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center gap-2 glassmorphic px-4 py-2 rounded-full">
+                  {benefit.icon}
+                  <span className="font-medium text-gray-800">{benefit.text}</span>
+                </div>
+              ))}
+            </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link href="/dashboard">
+                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:scale-105 transition-transform duration-300">
+                  Get Started
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/research">
+                <Button size="lg" variant="outline" className="hover:scale-105 transition-transform duration-300">
+                  <BookOpen className="mr-2 w-5 h-5" />
+                  Research Papers
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+            {stats.map((stat, index) => (
+              <div key={index} className="glassmorphic-strong rounded-2xl p-6 text-center card-hover">
+                <div className={`text-3xl md:text-4xl font-bold mb-2 ${stat.color}`}>
+                  {stat.value}
+                </div>
+                <div className="text-sm md:text-base text-gray-600">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
-}
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="gradient-text">Complete Ecosystem</span>
+            </h2>
+            <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+              End-to-end platform for green hydrogen production, storage, and distribution management
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Link key={index} href={feature.href}>
+                <Card className="glassmorphic-strong border-2 border-white/40 card-hover h-full cursor-pointer group">
+                  <CardHeader>
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                      {feature.icon}
+                    </div>
+                    <CardTitle className="text-2xl mb-2">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base text-gray-700">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Renewable Sources Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="gradient-text">Powered by Renewables</span>
+            </h2>
+            <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+              Integrate multiple renewable energy sources for sustainable hydrogen production
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="glassmorphic-strong border-2 border-white/40 card-hover">
+              <CardHeader>
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white mb-4 mx-auto">
+                  <Zap className="w-10 h-10" />
+                </div>
+                <CardTitle className="text-2xl text-center">Solar Energy</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-700 mb-4">Photovoltaic systems with 15-35% capacity factor for consistent hydrogen production</p>
+                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">25% Avg. Capacity</Badge>
+              </CardContent>
