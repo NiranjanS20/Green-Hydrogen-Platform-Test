@@ -46,12 +46,12 @@ export default function SimulationPage() {
             </div>
             <div>
               <label className="text-sm font-medium">Storage Type</label>
-              <Select value={storageType} onValueChange={setStorageType}>
-                <option value="Compressed">Compressed</option>
-                <option value="Liquid">Liquid</option>
-                <option value="Metal Hydride">Metal Hydride</option>
-                <option value="Underground">Underground</option>
-              </Select>
+                <Select value={storageType} onChange={(e) => setStorageType(e.target.value)}>
+                  <option value="Compressed">Compressed</option>
+                  <option value="Liquid">Liquid</option>
+                  <option value="Metal Hydride">Metal Hydride</option>
+                  <option value="Underground">Underground</option>
+                </Select>
             </div>
           </div>
 

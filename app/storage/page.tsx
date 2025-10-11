@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
+import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown, Activity } from 'lucide-react';
 import { supabase, getCurrentUser, StorageFacility, StorageRecord } from '@/lib/supabase';
 import { calculateStorageUtilization, calculateCompressionEnergy, calculateLiquefactionEnergy } from '@/lib/calculations';
 import { STORAGE_TYPES } from '@/lib/constants';
@@ -330,7 +330,7 @@ export default function StoragePage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={(entry: any) => `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -423,8 +423,8 @@ export default function StoragePage() {
                       </div>
                       <div className="flex gap-2">
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="ghost"
+                          className="border border-white/10"
                           onClick={() => {
                             setSelectedFacility(facility);
                             setShowTransactionModal(true);
@@ -433,10 +433,10 @@ export default function StoragePage() {
                           <ArrowUp className="w-4 h-4 mr-1" />
                           Add/Remove
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="ghost" className="border border-white/10">
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteFacility(facility.id)}>
+                        <Button variant="ghost" className="border border-white/10" onClick={() => handleDeleteFacility(facility.id)}>
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       </div>
@@ -703,8 +703,8 @@ export default function StoragePage() {
                 )}
               </div>
 
-              <div className="flex gap-3 mt-6">
-                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1">
+                <div className="flex gap-3 mt-6">
+                <Button onClick={() => setShowAddModal(false)} variant="ghost" className="flex-1 border border-white/10">
                   Cancel
                 </Button>
                 <Button onClick={handleAddFacility} className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white" disabled={!newFacility.name || !newFacility.location || newFacility.capacity_kg <= 0}>
@@ -817,7 +817,7 @@ export default function StoragePage() {
                 <Button onClick={() => {
                   setShowTransactionModal(false);
                   setTransaction({ transaction_type: 'input', quantity_kg: 0, notes: '' });
-                }} variant="outline" className="flex-1">
+                }} variant="ghost" className="flex-1 border border-white/10">
                   Cancel
                 </Button>
                 <Button

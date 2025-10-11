@@ -311,10 +311,10 @@ export default function ProductionPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="ghost" className="border border-white/10">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteFacility(facility.id)}>
+                      <Button variant="ghost" className="border border-white/10" onClick={() => handleDeleteFacility(facility.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -534,7 +534,7 @@ export default function ProductionPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1">
+                <Button onClick={() => setShowAddModal(false)} variant="ghost" className="flex-1 border border-white/10">
                   Cancel
                 </Button>
                 <Button onClick={handleAddFacility} className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white" disabled={!newFacility.name || !newFacility.location || newFacility.capacity_kg_per_day <= 0}>

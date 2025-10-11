@@ -231,7 +231,16 @@ export default function DashboardPage() {
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
-                                <Pie data={energySourceData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                                <Pie
+                                    data={energySourceData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={(entry: any) => `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`}
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
                                     {energySourceData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
@@ -339,7 +348,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="mt-4 text-center">
                         <Link href="/transportation">
-                            <Button variant="outline" className="w-full">
+                            <Button variant="ghost" className="w-full border border-white/10">
                                 View All Routes
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>

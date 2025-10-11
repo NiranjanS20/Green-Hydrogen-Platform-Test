@@ -25,7 +25,7 @@ export default function ProfilePage() {
     const { user: currentUser } = await getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
-      setEmail(currentUser.email);
+      setEmail(currentUser.email || '');
       setName(currentUser.user_metadata?.full_name || '');
       setStatus(currentUser.user_metadata?.status || 'active');
     }
@@ -67,7 +67,10 @@ export default function ProfilePage() {
           </div>
           <div>
             <label className="text-sm font-medium">Email</label>
-            <Input value={email} disabled icon={<Mail className="w-4 h-4 text-gray-500" />} />
+            <div className="relative">
+              <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input value={email} disabled className="pl-10" />
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium">Status</label>
@@ -78,7 +81,7 @@ export default function ProfilePage() {
               <Save className="w-4 h-4 mr-2" />
               Save Changes
             </Button>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="ghost" className="border border-white/10" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>

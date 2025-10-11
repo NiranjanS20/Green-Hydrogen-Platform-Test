@@ -176,7 +176,7 @@ export default function TransportationPage() {
                   <h3 className="text-lg font-bold">{route.method}</h3>
                   <Badge>{route.status}</Badge>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => handleDeleteRoute(route.id)}>
+                <Button variant="ghost" className="border border-white/10" onClick={() => handleDeleteRoute(route.id)}>
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </Button>
               </div>

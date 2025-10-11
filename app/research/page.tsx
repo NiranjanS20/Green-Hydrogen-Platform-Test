@@ -11,8 +11,9 @@ import { Progress } from '@/components/ui/progress';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { BookOpen, Search, Plus, Trash2, Calendar, FileText } from 'lucide-react';
+import { BookOpen, Search, Plus, Trash2, Calendar, FileText, Upload } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import FileUpload from '@/components/FileUpload';
 
 type ResearchPaper = {
   id: string;
@@ -22,6 +23,7 @@ type ResearchPaper = {
   published_date: string;
   source: string;
   topic: 'Production' | 'Storage' | 'Transport' | 'Policy' | 'Economics';
+  pdf_url?: string;
 };
 
 export default function ResearchPage() {
@@ -151,7 +153,7 @@ export default function ResearchPage() {
                     {formatDate(paper.published_date)}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => handleDeletePaper(paper.id)}>
+                <Button variant="ghost" className="border border-white/10" onClick={() => handleDeletePaper(paper.id)}>
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </Button>
               </div>

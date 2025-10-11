@@ -36,23 +36,29 @@ export default function SignupPage() {
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium">Email</label>
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              icon={<Mail className="w-4 h-4 text-gray-500" />}
-            />
+            <div className="relative">
+              <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium">Password</label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              icon={<Lock className="w-4 h-4 text-gray-500" />}
-            />
+            <div className="relative">
+              <Lock className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
           {successMsg && <p className="text-sm text-green-600">{successMsg}</p>}

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Sun, Wind, Droplets, Plus, Trash2, Activity, Leaf } from 'lucide-react';
+import { Sun, Wind, Droplets, Plus, Trash2, Activity, Leaf, MapPin } from 'lucide-react';
 import { formatNumber, formatDate } from '@/lib/utils';
 
 type RenewableSource = {
@@ -174,7 +174,7 @@ export default function RenewableSourcesPage() {
                   <h3 className="text-lg font-bold">{source.type}</h3>
                   <Badge>{source.status}</Badge>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => handleDeleteSource(source.id)}>
+                <Button variant="ghost" className="border border-white/10" onClick={() => handleDeleteSource(source.id)}>
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </Button>
               </div>
