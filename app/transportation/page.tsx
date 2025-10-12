@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Card, CardHeader, CardTitle, CardDescription, CardContent,
+  Card, CardHeader, CardTitle, CardContent,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Truck, MapPin, Plus, Trash2, Activity, Zap, ShieldCheck } from 'lucide-react';
 import { formatNumber, formatDate } from '@/lib/utils';
 
@@ -27,7 +26,7 @@ type TransportRoute = {
 export default function TransportationPage() {
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [, setShowAddModal] = useState(false);
   const [newRoute, setNewRoute] = useState({
     method: 'Trailer' as TransportRoute['method'],
     distance_km: 0,
@@ -70,7 +69,7 @@ export default function TransportationPage() {
     setLoading(false);
   };
 
-  const handleAddRoute = () => {
+  const _handleAddRoute = (): void => {
     const newId = `r${routes.length + 1}`;
     setRoutes([
       ...routes,

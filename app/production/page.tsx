@@ -6,21 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select } from '@/components/ui/select';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Factory, Plus, TrendingUp, Zap, Droplets, Activity, AlertCircle, CheckCircle2, Edit, Trash2, Calendar, MapPin, Settings } from 'lucide-react';
+import { Factory, Plus, TrendingUp, Zap, Droplets, Activity, Edit, Trash2, Calendar, MapPin, Settings } from 'lucide-react';
 import { supabase, getCurrentUser, ProductionFacility, ProductionRecord } from '@/lib/supabase';
-import { calculateHydrogenProduction, calculateWaterConsumption, calculateCarbonOffset, calculateProductionEfficiency } from '@/lib/calculations';
-import { ELECTROLYZER_TYPES } from '@/lib/constants';
+import { calculateWaterConsumption, calculateCarbonOffset } from '@/lib/calculations';
 import { formatNumber, formatDate, getStatusColor } from '@/lib/utils';
 
 export default function ProductionPage() {
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState<ProductionFacility[]>([]);
-  const [productionRecords, setProductionRecords] = useState<ProductionRecord[]>([]);
-  const [selectedFacility, setSelectedFacility] = useState<string | null>(null);
+  const [, setProductionRecords] = useState<ProductionRecord[]>([]);
+  const [, setSelectedFacility] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
   const [newFacility, setNewFacility] = useState({
     name: '',

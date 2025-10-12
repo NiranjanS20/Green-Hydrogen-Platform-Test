@@ -7,13 +7,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { BookOpen, Search, Plus, Trash2, Calendar, FileText, Upload } from 'lucide-react';
+import { BookOpen, Search, Plus, Trash2, Calendar, FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import FileUpload from '@/components/FileUpload';
 
 type ResearchPaper = {
   id: string;
@@ -30,14 +28,7 @@ export default function ResearchPage() {
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newPaper, setNewPaper] = useState({
-    title: '',
-    abstract: '',
-    authors: '',
-    source: '',
-    topic: 'Production' as ResearchPaper['topic'],
-  });
+  const [, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadPapers();

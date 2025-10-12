@@ -5,12 +5,10 @@ import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
 } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Progress } from '@/components/ui/progress';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { Droplets, Zap, Leaf, Factory } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];

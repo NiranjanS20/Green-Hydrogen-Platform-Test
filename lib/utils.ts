@@ -60,7 +60,7 @@ export function getStatusColor(status: string): string {
   return statusColors[status] || 'bg-gray-100 text-gray-800 border-gray-200'
 }
 
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

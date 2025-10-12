@@ -10,7 +10,6 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown, Activity } from 'lucide-react';
 import { supabase, getCurrentUser, StorageFacility, StorageRecord } from '@/lib/supabase';
 import { calculateStorageUtilization, calculateCompressionEnergy, calculateLiquefactionEnergy } from '@/lib/calculations';
-import { STORAGE_TYPES } from '@/lib/constants';
 import { formatNumber, formatDate, formatDateTime, getStatusColor } from '@/lib/utils';
 
 export default function StoragePage() {
@@ -20,7 +19,7 @@ export default function StoragePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<StorageFacility | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
   const [newFacility, setNewFacility] = useState({
     name: '',
@@ -330,7 +329,7 @@ export default function StoragePage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry: any) => `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`}
+                  label={false}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -638,7 +637,7 @@ export default function StoragePage() {
                     <select
                       className="w-full p-2 border border-gray-300 rounded-lg"
                       value={newFacility.storage_type}
-                      onChange={(e) => setNewFacility({ ...newFacility, storage_type: e.target.value as any })}
+                      onChange={(e) => setNewFacility({ ...newFacility, storage_type: e.target.value as 'compressed' | 'liquid' | 'metal_hydride' | 'underground' })}
                     >
                       <option value="compressed">Compressed Gas</option>
                       <option value="liquid">Liquid Hydrogen</option>

@@ -140,7 +140,7 @@ export interface Simulation {
   electrolyzer_type: string
   electrolyzer_efficiency: number | null
   production_target_kg_per_day: number | null
-  simulation_results: any
+  simulation_results: Record<string, unknown>
   created_at: string
 }
 

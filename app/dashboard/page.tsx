@@ -6,14 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Factory, Database, Truck, Zap, TrendingUp, TrendingDown, Activity, AlertCircle, CheckCircle2, Clock, ArrowRight, Droplets, Wind, Sun } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { Factory, Database, Truck, Zap, TrendingUp, Activity, AlertCircle, CheckCircle2, Clock, ArrowRight, Droplets, Wind, Sun } from 'lucide-react';
 import { supabase, getCurrentUser } from '@/lib/supabase';
-import { formatNumber, formatDate } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<any>(null);
+    const [, setUser] = useState<{ id: string; email?: string } | null>(null);
     const [metrics, setMetrics] = useState({
         totalProduction: 0,
         totalEnergy: 0,
@@ -236,7 +236,7 @@ export default function DashboardPage() {
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={(entry: any) => `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`}
+                                    label={false}
                                     outerRadius={100}
                                     fill="#8884d8"
                                     dataKey="value"

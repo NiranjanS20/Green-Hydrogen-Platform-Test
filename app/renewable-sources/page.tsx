@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Card, CardHeader, CardTitle, CardDescription, CardContent,
+  Card, CardHeader, CardTitle, CardContent,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -25,7 +24,7 @@ type RenewableSource = {
 export default function RenewableSourcesPage() {
   const [sources, setSources] = useState<RenewableSource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [, setShowAddModal] = useState(false);
   const [newSource, setNewSource] = useState({
     type: 'Solar' as RenewableSource['type'],
     capacity_kwh: 0,
@@ -62,7 +61,7 @@ export default function RenewableSourcesPage() {
     setLoading(false);
   };
 
-  const handleAddSource = () => {
+  const _handleAddSource = (): void => {
     const newId = `s${sources.length + 1}`;
     setSources([
       ...sources,
