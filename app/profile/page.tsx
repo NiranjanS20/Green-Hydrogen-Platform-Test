@@ -71,7 +71,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       // Check if user is requesting admin role
-      let finalRole = profile.role;
+      const finalRole = profile.role;
       let adminStatus = 'active';
       
       if (profile.role === 'admin') {

@@ -6,28 +6,29 @@ import { Card, CardBody, CardHeader } from '@heroui/react';
 import { Button } from '@heroui/react';
 import { Input } from '@heroui/react';
 import { Chip } from '@heroui/react';
-import { Download, Lock, Eye, Database, Factory, Zap, Truck, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { Download, Lock, Eye, Database, Factory, Zap, Truck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatNumber, formatDate } from '@/lib/utils';
 
 const ADMIN_PASSWORD = 'M@nthan290719';
 const SESSION_TIMEOUT = 60000; // 1 minute in milliseconds
 
+interface AdminData {
+  production: Record<string, unknown>[];
+  storage: Record<string, unknown>[];
+  renewable: Record<string, unknown>[];
+  transport: Record<string, unknown>[];
+  users: Record<string, unknown>[];
+  pendingAdmins: Record<string, unknown>[];
+  totalStats: Record<string, unknown>;
+}
+
 export default function AdminPage() {
-  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [lastActivity, setLastActivity] = useState(Date.now());
-  const [data, setData] = useState<{
-    production: any[];
-    storage: any[];
-    renewable: any[];
-    transport: any[];
-    users: any[];
-    pendingAdmins: any[];
-    totalStats: any;
-  }>({
+  const [data, setData] = useState<AdminData>({
     production: [],
     storage: [],
     renewable: [],
@@ -36,7 +37,6 @@ export default function AdminPage() {
     pendingAdmins: [],
     totalStats: {}
   });
-  const [loading, setLoading] = useState(false);
 
   // Session timeout check
   useEffect(() => {
