@@ -115,6 +115,7 @@ export default function ProductionPage() {
       });
     } catch (error) {
       console.error('Error adding facility:', error);
+      alert('Failed to add facility');
     }
   };
 

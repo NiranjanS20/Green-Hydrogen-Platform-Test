@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Globe } from 'lucide-react';
 import { locales, localeNames, localeFlags, type Locale } from '@/lib/i18n/config';
 import {
@@ -33,15 +32,12 @@ export default function LanguageSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          className="flex items-center gap-2 text-gray-700 hover:text-blue-600 px-3 py-1.5 text-sm"
-        >
-          <Globe className="w-4 h-4" />
-          <span className="hidden md:inline">{localeFlags[currentLocale]} {localeNames[currentLocale]}</span>
-          <span className="md:hidden">{localeFlags[currentLocale]}</span>
-        </Button>
+      <DropdownMenuTrigger
+        className="flex items-center gap-2 text-gray-700 hover:text-blue-600 px-3 py-1.5 text-sm rounded-md border border-transparent hover:border-blue-200 bg-white/60"
+      >
+        <Globe className="w-4 h-4" />
+        <span className="hidden md:inline">{localeFlags[currentLocale]} {localeNames[currentLocale]}</span>
+        <span className="md:hidden">{localeFlags[currentLocale]}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="glassmorphic-strong border-2 border-white/40">
         {locales.map((locale) => (

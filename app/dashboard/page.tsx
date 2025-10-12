@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Chip } from '@heroui/react';
+import { Button } from '@heroui/react';
+import { Progress } from '@heroui/react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Factory, Database, Truck, Zap, TrendingUp, Activity, AlertCircle, CheckCircle2, Clock, ArrowRight, Droplets, Wind, Sun } from 'lucide-react';
 import { supabase, getCurrentUser } from '@/lib/supabase';
@@ -134,13 +134,13 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-8">
+        <div className="space-y-8">
             {/* Header */}
-            <div className="glassmorphic-strong rounded-2xl p-6">
-                <h1 className="text-4xl font-bold gradient-text mb-2">
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 text-white">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2">
                     {user?.full_name ? `Welcome back, ${user.full_name}!` : 'Dashboard Overview'}
                 </h1>
-                <p className="text-gray-700">Monitor your green hydrogen production ecosystem in real-time</p>
+                <p className="text-blue-100 text-lg">Monitor your green hydrogen production ecosystem in real-time</p>
             </div>
 
             {/* Quick Actions */}

@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import Select from '@/components/ui/select';
+import Modal from '@/components/ui/modal';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Truck, MapPin, Plus, Trash2, Activity, Zap, Package, Route } from 'lucide-react';
 import { formatNumber, formatDate } from '@/lib/utils';
@@ -300,7 +299,7 @@ export default function TransportationPage() {
                         <Badge className={getStatusColor(route.status)}>
                           {route.status.replace('_', ' ')}
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="info" className="text-xs">
                           {route.transport_type.replace('_', ' ').toUpperCase()}
                         </Badge>
                       </div>
@@ -349,126 +348,111 @@ export default function TransportationPage() {
       </Card>
 
       {/* Add Route Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="sm:max-w-[600px] glassmorphic-strong">
-          <DialogHeader>
-            <DialogTitle className="text-2xl gradient-text">Add New Transport Route</DialogTitle>
-            <DialogDescription>
-              Create a new hydrogen transportation route. Fill in the details below.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
+      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Transport Route" className="glassmorphic-strong">
+        <p className="text-sm text-gray-600 mb-2">
+          Create a new hydrogen transportation route. Fill in the details below.
+        </p>
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-2">
+            <label htmlFor="route_name" className="text-sm font-medium text-gray-700">Route Name *</label>
+            <Input
+              id="route_name"
+              placeholder="e.g., Plant A to Storage B"
+              value={newRoute.route_name}
+              onChange={(e) => setNewRoute({ ...newRoute, route_name: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="route_name">Route Name *</Label>
+              <label htmlFor="origin" className="text-sm font-medium text-gray-700">Origin *</label>
               <Input
-                id="route_name"
-                placeholder="e.g., Plant A to Storage B"
-                value={newRoute.route_name}
-                onChange={(e) => setNewRoute({ ...newRoute, route_name: e.target.value })}
+                id="origin"
+                placeholder="e.g., Production Facility"
+                value={newRoute.origin}
+                onChange={(e) => setNewRoute({ ...newRoute, origin: e.target.value })}
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="origin">Origin *</Label>
-                <Input
-                  id="origin"
-                  placeholder="e.g., Production Facility"
-                  value={newRoute.origin}
-                  onChange={(e) => setNewRoute({ ...newRoute, origin: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="destination">Destination *</Label>
-                <Input
-                  id="destination"
-                  placeholder="e.g., Storage Site"
-                  value={newRoute.destination}
-                  onChange={(e) => setNewRoute({ ...newRoute, destination: e.target.value })}
-                />
-              </div>
-            </div>
-
             <div className="grid gap-2">
-              <Label htmlFor="transport_type">Transport Type *</Label>
-              <Select 
-                value={newRoute.transport_type} 
-                onValueChange={(value: TransportRoute['transport_type']) => setNewRoute({ ...newRoute, transport_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tube_trailer">🚚 Tube Trailer</SelectItem>
-                  <SelectItem value="tanker">🚛 Tanker</SelectItem>
-                  <SelectItem value="pipeline">🔧 Pipeline</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="distance_km">Distance (km)</Label>
-                <Input
-                  id="distance_km"
-                  type="number"
-                  placeholder="120"
-                  value={newRoute.distance_km}
-                  onChange={(e) => setNewRoute({ ...newRoute, distance_km: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="capacity_kg">Capacity (kg)</Label>
-                <Input
-                  id="capacity_kg"
-                  type="number"
-                  placeholder="500"
-                  value={newRoute.capacity_kg}
-                  onChange={(e) => setNewRoute({ ...newRoute, capacity_kg: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="energy_cost_kwh">Energy Cost (kWh)</Label>
-                <Input
-                  id="energy_cost_kwh"
-                  type="number"
-                  placeholder="800"
-                  value={newRoute.energy_cost_kwh}
-                  onChange={(e) => setNewRoute({ ...newRoute, energy_cost_kwh: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="pressure_loss_bar">Pressure Loss (bar)</Label>
-                <Input
-                  id="pressure_loss_bar"
-                  type="number"
-                  step="0.1"
-                  placeholder="5.5"
-                  value={newRoute.pressure_loss_bar}
-                  onChange={(e) => setNewRoute({ ...newRoute, pressure_loss_bar: e.target.value })}
-                />
-              </div>
+              <label htmlFor="destination" className="text-sm font-medium text-gray-700">Destination *</label>
+              <Input
+                id="destination"
+                placeholder="e.g., Storage Site"
+                value={newRoute.destination}
+                onChange={(e) => setNewRoute({ ...newRoute, destination: e.target.value })}
+              />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowAddModal(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddRoute} 
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white"
-              disabled={saving}
+          <div className="grid gap-2">
+            <Select
+              value={newRoute.transport_type}
+              onChange={(e) => setNewRoute({ ...newRoute, transport_type: e.target.value as TransportRoute['transport_type'] })}
+              label="Transport Type *"
             >
-              {saving ? 'Adding...' : 'Add Route'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <option value="tube_trailer">🚚 Tube Trailer</option>
+              <option value="tanker">🚛 Tanker</option>
+              <option value="pipeline">🔧 Pipeline</option>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <label htmlFor="distance_km" className="text-sm font-medium text-gray-700">Distance (km)</label>
+              <Input
+                id="distance_km"
+                type="number"
+                placeholder="120"
+                value={newRoute.distance_km}
+                onChange={(e) => setNewRoute({ ...newRoute, distance_km: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="capacity_kg" className="text-sm font-medium text-gray-700">Capacity (kg)</label>
+              <Input
+                id="capacity_kg"
+                type="number"
+                placeholder="500"
+                value={newRoute.capacity_kg}
+                onChange={(e) => setNewRoute({ ...newRoute, capacity_kg: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <label htmlFor="energy_cost_kwh" className="text-sm font-medium text-gray-700">Energy Cost (kWh)</label>
+              <Input
+                id="energy_cost_kwh"
+                type="number"
+                placeholder="800"
+                value={newRoute.energy_cost_kwh}
+                onChange={(e) => setNewRoute({ ...newRoute, energy_cost_kwh: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="pressure_loss_bar" className="text-sm font-medium text-gray-700">Pressure Loss (bar)</label>
+              <Input
+                id="pressure_loss_bar"
+                type="number"
+                step="0.1"
+                placeholder="5.5"
+                value={newRoute.pressure_loss_bar}
+                onChange={(e) => setNewRoute({ ...newRoute, pressure_loss_bar: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={() => setShowAddModal(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleAddRoute} className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white" disabled={saving}>
+            {saving ? 'Adding...' : 'Add Route'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
