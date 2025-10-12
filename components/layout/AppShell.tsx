@@ -7,19 +7,33 @@ import { Menu, X, User, LogOut } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/production', label: 'Production' },
-  { href: '/storage', label: 'Storage' },
-  { href: '/transportation', label: 'Transportation' },
-  { href: '/research', label: 'Research' },
-  { href: '/simulation', label: 'Simulation' },
-];
+const getNavItems = (isAdmin: boolean) => {
+  const baseItems = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/production', label: 'Production' },
+    { href: '/storage', label: 'Storage' },
+    { href: '/transportation', label: 'Transportation' },
+    { href: '/analytics', label: 'Analytics' },
+    { href: '/renewable-sources', label: 'Renewable Sources' },
+    { href: '/research', label: 'Research' },
+    { href: '/simulation', label: 'Simulation' },
+  ];
+  
+  if (isAdmin) {
+    baseItems.push({ href: '/admin', label: '🔒 Admin Panel' });
+  }
+  
+  return baseItems;
+};
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState<{ email?: string; full_name?: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; full_name?: string; role?: string; organization?: string; admin_status?: string } | null>(null);
+  
+  // Check if user is active admin
+  const isAdmin = user?.role === 'admin' && user?.admin_status === 'active';
+  const navItems = useMemo(() => getNavItems(isAdmin), [isAdmin]);
 
   useEffect(() => {
     const run = async () => {
@@ -27,10 +41,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if (currentUser) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, email')
+          .select('full_name, email, role, organization, admin_status')
           .eq('id', currentUser.id)
           .single();
-        setUser({ email: profile?.email || currentUser.email || undefined, full_name: profile?.full_name || undefined });
+        setUser({ 
+          email: profile?.email || currentUser.email || undefined, 
+          full_name: profile?.full_name || undefined,
+          role: profile?.role || undefined,
+          organization: profile?.organization || undefined,
+          admin_status: profile?.admin_status || undefined
+        });
       } else {
         setUser(null);
       }
@@ -96,10 +116,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
               {user ? (
-                <div className="flex items-center gap-2 pl-3 border-l">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-gray-700 max-w-[160px] truncate">{user.full_name || user.email}</span>
-                  <button onClick={handleSignOut} className="text-xs text-red-600 hover:underline flex items-center gap-1">
+                <div className="flex items-center gap-3">
+                  <Link href="/profile" className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {user?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="hidden md:block">
+                      <p className="text-sm font-medium text-gray-900">{user?.full_name || 'User'}</p>
+                      <p className="text-xs text-gray-500">{user?.role || 'Operator'}</p>
+                    </div>
+                  </Link>
+                  <button onClick={handleSignOut} className="text-xs text-red-600 hover:underline flex items-center gap-1 ml-2">
                     <LogOut className="w-3 h-3" /> Sign out
                   </button>
                 </div>

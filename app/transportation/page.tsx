@@ -10,8 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import Modal from '@/components/ui/modal';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Truck, MapPin, Plus, Trash2, Activity, Zap, Package, Route } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
+import { Truck, MapPin, Plus, Trash2, Activity, Zap, Package, Route, Play, Pause, CheckCircle2, Clock, Navigation, TrendingUp, AlertTriangle } from 'lucide-react';
 import { formatNumber, formatDate } from '@/lib/utils';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 
@@ -28,6 +28,7 @@ type TransportRoute = {
   energy_cost_kwh: number | null;
   pressure_loss_bar: number | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export default function TransportationPage() {
@@ -44,6 +45,15 @@ export default function TransportationPage() {
     capacity_kg: '',
     energy_cost_kwh: '',
     pressure_loss_bar: '',
+  });
+  
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState<TransportRoute | null>(null);
+  const [deliveryDetails, setDeliveryDetails] = useState({
+    load_kg: '',
+    priority: 'normal' as 'low' | 'normal' | 'high' | 'urgent',
+    estimated_time: '',
+    notes: ''
   });
 
   useEffect(() => {
@@ -142,6 +152,93 @@ export default function TransportationPage() {
     }
   };
 
+  const startDelivery = (route: TransportRoute) => {
+    setSelectedRoute(route);
+    setDeliveryDetails({
+      load_kg: route.capacity_kg.toString(),
+      priority: 'normal',
+      estimated_time: calculateEstimatedTime(route).toString(),
+      notes: ''
+    });
+    setShowDeliveryModal(true);
+  };
+
+  const handleStartDelivery = async () => {
+    if (!selectedRoute) return;
+
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('transport_routes')
+        .update({
+          status: 'in_transit',
+          current_load_kg: parseFloat(deliveryDetails.load_kg),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedRoute.id);
+
+      if (error) throw error;
+
+      // Create delivery record
+      await supabase.from('delivery_records').insert({
+        route_id: selectedRoute.id,
+        load_kg: parseFloat(deliveryDetails.load_kg),
+        priority: deliveryDetails.priority,
+        estimated_delivery: new Date(Date.now() + parseFloat(deliveryDetails.estimated_time) * 60 * 60 * 1000).toISOString(),
+        status: 'in_transit',
+        notes: deliveryDetails.notes
+      });
+
+      await loadRoutes();
+      setShowDeliveryModal(false);
+      alert('Delivery started successfully!');
+    } catch (error) {
+      console.error('Error starting delivery:', error);
+      alert('Failed to start delivery');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const completeDelivery = async (routeId: string) => {
+    try {
+      const { error } = await supabase
+        .from('transport_routes')
+        .update({
+          status: 'completed',
+          current_load_kg: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', routeId);
+
+      if (error) throw error;
+      await loadRoutes();
+      alert('Delivery completed!');
+    } catch (error) {
+      console.error('Error completing delivery:', error);
+      alert('Failed to complete delivery');
+    }
+  };
+
+  const calculateEstimatedTime = (route: TransportRoute): number => {
+    // Simple calculation: distance / average speed + loading time
+    const avgSpeed = route.transport_type === 'pipeline' ? 50 : 60; // km/h
+    const loadingTime = 0.5; // hours
+    return Math.round((route.distance_km / avgSpeed + loadingTime) * 10) / 10;
+  };
+
+  const optimizeRoutes = () => {
+    // Sort routes by efficiency (distance vs capacity)
+    const optimized = [...routes].sort((a, b) => {
+      const efficiencyA = a.capacity_kg / (a.distance_km || 1);
+      const efficiencyB = b.capacity_kg / (b.distance_km || 1);
+      return efficiencyB - efficiencyA;
+    });
+    
+    setRoutes(optimized);
+    alert('Routes optimized by efficiency!');
+  };
+
   const totalEnergy = routes.reduce((sum, r) => sum + (r.energy_cost_kwh || 0), 0);
   const avgPressureLoss = routes.length > 0 ? routes.reduce((sum, r) => sum + (r.pressure_loss_bar || 0), 0) / routes.length : 0;
   const activeRoutes = routes.filter((r) => r.status === 'in_transit');
@@ -181,13 +278,23 @@ export default function TransportationPage() {
           <h1 className="text-4xl font-bold gradient-text mb-2">🚚 Hydrogen Transportation</h1>
           <p className="text-gray-700">Manage routes and monitor distribution efficiency</p>
         </div>
-        <Button 
-          onClick={() => setShowAddModal(true)} 
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700 shadow-lg"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Route
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={optimizeRoutes}
+            variant="outline"
+            className="border-green-500 text-green-600 hover:bg-green-50"
+          >
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Optimize Routes
+          </Button>
+          <Button 
+            onClick={() => setShowAddModal(true)} 
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Route
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -305,16 +412,39 @@ export default function TransportationPage() {
                       </div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50" 
-                    onClick={() => handleDeleteRoute(route.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    {route.status === 'scheduled' && (
+                      <Button 
+                        onClick={() => startDelivery(route)}
+                        className="bg-green-600 text-white hover:bg-green-700"
+                        size="sm"
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Start Delivery
+                      </Button>
+                    )}
+                    {route.status === 'in_transit' && (
+                      <Button 
+                        onClick={() => completeDelivery(route.id)}
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        size="sm"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Complete
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50" 
+                      onClick={() => handleDeleteRoute(route.id)}
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                   <div className="flex items-center gap-2 text-gray-700">
                     <MapPin className="w-4 h-4 text-blue-600" />
                     <span className="font-medium">{route.origin} → {route.destination}</span>
@@ -324,14 +454,29 @@ export default function TransportationPage() {
                     <span>{route.distance_km} km</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-700">
+                    <Package className="w-4 h-4 text-purple-600" />
+                    <span>{formatNumber(route.current_load_kg || 0, 0)} / {formatNumber(route.capacity_kg, 0)} kg</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Clock className="w-4 h-4 text-orange-600" />
+                    <span>ETA: {calculateEstimatedTime(route)}h</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
                     <Zap className="w-4 h-4 text-yellow-600" />
                     <span>{route.energy_cost_kwh || 0} kWh</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Package className="w-4 h-4 text-purple-600" />
-                    <span>{formatNumber(route.capacity_kg, 0)} kg capacity</span>
-                  </div>
                 </div>
+                
+                {/* Progress bar for in-transit routes */}
+                {route.status === 'in_transit' && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Delivery Progress</span>
+                      <span>{Math.round((route.current_load_kg / route.capacity_kg) * 100)}% loaded</span>
+                    </div>
+                    <Progress value={(route.current_load_kg / route.capacity_kg) * 100} className="h-2" />
+                  </div>
+                )}
 
                 {route.pressure_loss_bar && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
@@ -452,6 +597,98 @@ export default function TransportationPage() {
             {saving ? 'Adding...' : 'Add Route'}
           </Button>
         </div>
+      </Modal>
+
+      {/* Start Delivery Modal */}
+      <Modal open={showDeliveryModal} onClose={() => setShowDeliveryModal(false)} title="Start Delivery" className="glassmorphic-strong">
+        {selectedRoute && (
+          <>
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-blue-800">{selectedRoute.route_name}</h4>
+              <p className="text-sm text-blue-600">{selectedRoute.origin} → {selectedRoute.destination}</p>
+            </div>
+            
+            <div className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-700">Load Amount (kg) *</label>
+                <Input
+                  type="number"
+                  placeholder={selectedRoute.capacity_kg.toString()}
+                  value={deliveryDetails.load_kg}
+                  onChange={(e) => setDeliveryDetails({ ...deliveryDetails, load_kg: e.target.value })}
+                  max={selectedRoute.capacity_kg}
+                />
+                <p className="text-xs text-gray-500">Max capacity: {selectedRoute.capacity_kg} kg</p>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-700">Priority Level</label>
+                <Select
+                  value={deliveryDetails.priority}
+                  onChange={(e) => setDeliveryDetails({ ...deliveryDetails, priority: e.target.value as any })}
+                >
+                  <option value="low">🟢 Low Priority</option>
+                  <option value="normal">🟡 Normal Priority</option>
+                  <option value="high">🟠 High Priority</option>
+                  <option value="urgent">🔴 Urgent</option>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-700">Estimated Time (hours)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={deliveryDetails.estimated_time}
+                  onChange={(e) => setDeliveryDetails({ ...deliveryDetails, estimated_time: e.target.value })}
+                />
+                <p className="text-xs text-gray-500">Auto-calculated: {calculateEstimatedTime(selectedRoute)} hours</p>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-700">Delivery Notes</label>
+                <Input
+                  placeholder="Special instructions, contact info, etc."
+                  value={deliveryDetails.notes}
+                  onChange={(e) => setDeliveryDetails({ ...deliveryDetails, notes: e.target.value })}
+                />
+              </div>
+
+              {/* Route Optimization Suggestions */}
+              <div className="p-3 bg-green-50 rounded-lg">
+                <h5 className="font-medium text-green-800 mb-2 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Optimization Suggestions
+                </h5>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Efficiency: {Math.round(selectedRoute.capacity_kg / selectedRoute.distance_km * 100) / 100} kg/km</li>
+                  <li>• Energy cost: {Math.round((selectedRoute.energy_cost_kwh || 0) / selectedRoute.capacity_kg * 100) / 100} kWh/kg</li>
+                  {selectedRoute.pressure_loss_bar && selectedRoute.pressure_loss_bar > 10 && (
+                    <li className="text-amber-600">⚠️ High pressure loss detected - consider route optimization</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="ghost" onClick={() => setShowDeliveryModal(false)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleStartDelivery} 
+                className="bg-green-600 text-white hover:bg-green-700" 
+                disabled={saving || !deliveryDetails.load_kg}
+              >
+                {saving ? 'Starting...' : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Delivery
+                  </>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
       </Modal>
     </div>
   );

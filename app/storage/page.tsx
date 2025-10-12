@@ -63,38 +63,51 @@ export default function StoragePage() {
   ];
 
   useEffect(() => {
-    loadData();
+    loadStorageData();
   }, []);
 
-  const loadData = async () => {
+  const loadStorageData = async () => {
     try {
       const { user: currentUser } = await getCurrentUser();
       setUser(currentUser);
 
       if (currentUser) {
+        console.log('Loading storage data for user:', currentUser.id);
+        
+        // Load storage facilities
         const { data: facilitiesData, error: facilitiesError } = await supabase
           .from('storage_facilities')
           .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false });
 
-        if (facilitiesError) throw facilitiesError;
-        setFacilities(facilitiesData || []);
+        if (facilitiesError) {
+          console.error('Error loading facilities:', facilitiesError);
+        } else {
+          console.log('Loaded facilities:', facilitiesData);
+          setFacilities(facilitiesData || []);
+        }
 
-        if (facilitiesData && facilitiesData.length > 0) {
-          const { data: recordsData, error: recordsError } = await supabase
-            .from('storage_records')
-            .select('*')
-            .in('storage_id', facilitiesData.map(f => f.id))
-            .order('record_date', { ascending: false })
-            .limit(50);
+        // Load storage records
+        const { data: recordsData, error: recordsError } = await supabase
+          .from('storage_records')
+          .select(`
+            *,
+            storage_facilities!inner(user_id)
+          `)
+          .eq('storage_facilities.user_id', currentUser.id)
+          .order('transaction_date', { ascending: false })
+          .limit(50);
 
-          if (recordsError) throw recordsError;
+        if (recordsError) {
+          console.error('Error loading records:', recordsError);
+        } else {
+          console.log('Loaded records:', recordsData);
           setStorageRecords(recordsData || []);
         }
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading storage data:', error);
     } finally {
       setLoading(false);
     }
@@ -134,6 +147,7 @@ export default function StoragePage() {
       });
     } catch (error) {
       console.error('Error adding facility:', error);
+      alert('Failed to add facility: ' + (error as any)?.message || 'Unknown error');
     }
   };
 
