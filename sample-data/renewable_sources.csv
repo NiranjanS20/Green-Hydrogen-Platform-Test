@@ -1,0 +1,11 @@
+name,location,source_type,capacity_mw,capacity_factor,current_output_mw,uptime_percent,energy_produced_kwh,status,weather_dependent,installation_date
+"Sunshine Solar Farm","Arizona, USA",solar,50,0.28,38.5,98.5,350000,operational,true,2022-05-10
+"Atlantic Wind Park","Scotland, UK",wind,75,0.42,52.5,96.2,630000,operational,true,2021-08-15
+"Mountain Hydro Station","Norway",hydro,100,0.65,85.0,99.1,1950000,operational,false,2020-03-20
+"Desert Solar Array","Dubai, UAE",solar,80,0.32,61.2,97.8,512000,operational,true,2023-01-12
+"Coastal Wind Farm","Denmark",wind,120,0.45,78.0,95.5,972000,operational,true,2022-11-05
+"Valley Hydro Plant","Switzerland",hydro,60,0.68,54.0,98.9,816000,operational,false,2021-06-18
+"Outback Solar Complex","Australia",solar,90,0.30,68.4,96.3,578000,operational,true,2023-04-22
+"North Sea Wind Array","Netherlands",wind,150,0.48,105.0,94.8,1512000,operational,true,2022-09-30
+"River Hydro Facility","Canada",hydro,85,0.70,72.3,99.5,1232550,operational,false,2020-12-08
+"Mediterranean Solar","Spain",solar,65,0.29,47.8,97.1,398500,maintenance,true,2022-07-14

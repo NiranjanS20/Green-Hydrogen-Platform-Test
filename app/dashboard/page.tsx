@@ -13,7 +13,7 @@ import { formatNumber } from '@/lib/utils';
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
-    const [, setUser] = useState<{ id: string; email?: string } | null>(null);
+    const [user, setUser] = useState<{ id: string; email?: string; full_name?: string } | null>(null);
     const [metrics, setMetrics] = useState({
         totalProduction: 0,
         totalEnergy: 0,
@@ -67,9 +67,22 @@ export default function DashboardPage() {
     const loadUserData = async () => {
         try {
             const { user: currentUser } = await getCurrentUser();
-            setUser(currentUser);
-
+            
             if (currentUser) {
+                // Load user profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, email')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                setUser({
+                    id: currentUser.id,
+                    email: currentUser.email,
+                    full_name: profile?.full_name
+                });
+
+                // Load metrics
                 const { data: metricsData } = await supabase
                     .from('system_metrics')
                     .select('*')
@@ -124,7 +137,9 @@ export default function DashboardPage() {
         <div className="p-4 md:p-8 space-y-8">
             {/* Header */}
             <div className="glassmorphic-strong rounded-2xl p-6">
-                <h1 className="text-4xl font-bold gradient-text mb-2">Dashboard Overview</h1>
+                <h1 className="text-4xl font-bold gradient-text mb-2">
+                    {user?.full_name ? `Welcome back, ${user.full_name}!` : 'Dashboard Overview'}
+                </h1>
                 <p className="text-gray-700">Monitor your green hydrogen production ecosystem in real-time</p>
             </div>
 

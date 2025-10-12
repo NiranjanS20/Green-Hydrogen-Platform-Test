@@ -1,0 +1,8 @@
+name,location,storage_type,capacity_kg,current_level_kg,pressure_bar,temperature_celsius,status,last_inspection_date
+"Coastal Storage A","Port of Rotterdam",compressed,5000,3800,350,-40,operational,2024-09-15
+"Central Hub Storage","Frankfurt, Germany",liquid,10000,8200,5,-253,operational,2024-10-01
+"Underground Reservoir 1","Texas, USA",underground,50000,32000,200,15,operational,2024-08-20
+"Alpine Storage Facility","Swiss Alps",compressed,8000,6100,400,-45,operational,2024-09-28
+"Desert Storage Complex","Abu Dhabi, UAE",metal_hydride,3000,2200,50,25,operational,2024-10-05
+"Nordic Storage Center","Bergen, Norway",liquid,12000,9500,8,-252,operational,2024-09-10
+"Pacific Storage Terminal","Perth, Australia",compressed,6500,4800,380,-42,maintenance,2024-08-30

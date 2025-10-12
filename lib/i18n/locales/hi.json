@@ -1,0 +1,78 @@
+{
+  "common": {
+    "welcome": "स्वागत है",
+    "login": "लॉगिन",
+    "logout": "साइन आउट",
+    "signup": "साइन अप",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "fullName": "पूरा नाम",
+    "submit": "सबमिट करें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "add": "जोड़ें",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता"
+  },
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "production": "उत्पादन",
+    "storage": "भंडारण",
+    "transportation": "परिवहन",
+    "research": "अनुसंधान",
+    "simulation": "सिमुलेशन",
+    "analytics": "विश्लेषण",
+    "profile": "प्रोफ़ाइल"
+  },
+  "dashboard": {
+    "title": "डैशबोर्ड अवलोकन",
+    "welcomeBack": "वापसी पर स्वागत है, {{name}}!",
+    "subtitle": "अपने हरित हाइड्रोजन उत्पादन पारिस्थितिकी तंत्र की वास्तविक समय में निगरानी करें",
+    "totalProduction": "कुल उत्पादन",
+    "energyConsumed": "ऊर्जा खपत",
+    "carbonOffset": "कार्बन ऑफसेट",
+    "avgEfficiency": "औसत दक्षता",
+    "activeFacilities": "सक्रिय सुविधाएं",
+    "storageUtilization": "भंडारण उपयोग"
+  },
+  "transportation": {
+    "title": "हाइड्रोजन परिवहन",
+    "subtitle": "मार्गों का प्रबंधन करें और वितरण दक्षता की निगरानी करें",
+    "addRoute": "मार्ग जोड़ें",
+    "routeName": "मार्ग का नाम",
+    "origin": "उत्पत्ति",
+    "destination": "गंतव्य",
+    "transportType": "परिवहन प्रकार",
+    "distance": "दूरी",
+    "capacity": "क्षमता",
+    "energyCost": "ऊर्जा लागत",
+    "pressureLoss": "दबाव हानि",
+    "activeRoutes": "सक्रिय मार्ग",
+    "totalCapacity": "कुल क्षमता",
+    "noRoutes": "अभी तक कोई मार्ग नहीं जोड़ा गया",
+    "addFirstRoute": "अपना पहला मार्ग जोड़ें"
+  },
+  "chat": {
+    "title": "H2 AI सहायक",
+    "online": "ऑनलाइन",
+    "offline": "ऑफ़लाइन",
+    "thinking": "सोच रहा है...",
+    "placeholder": "हाइड्रोजन उत्पादन के बारे में पूछें...",
+    "greeting": "नमस्ते! मैं आपका हरित हाइड्रोजन AI सहायक हूं। मैं उत्पादन, भंडारण, परिवहन और अधिक में आपकी सहायता कर सकता हूं। आप क्या जानना चाहेंगे?",
+    "quickQuestions": "त्वरित प्रश्न"
+  },
+  "auth": {
+    "welcomeBack": "वापसी पर स्वागत है",
+    "createAccount": "खाता बनाएं",
+    "signInSubtitle": "अपने खाते में साइन इन करें",
+    "signUpSubtitle": "हरित हाइड्रोजन प्लेटफॉर्म में शामिल हों",
+    "noAccount": "खाता नहीं है? साइन अप करें",
+    "haveAccount": "पहले से खाता है? लॉगिन करें",
+    "pleaseWait": "कृपया प्रतीक्षा करें..."
+  }
+}

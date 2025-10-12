@@ -1,0 +1,9 @@
+name,location,electrolyzer_type,capacity_kg_per_day,efficiency_percent,status,commissioned_date
+"Green Valley H2 Plant","California, USA",PEM,500,72,operational,2022-03-15
+"Nordic Hydrogen Facility","Oslo, Norway",Alkaline,800,68,operational,2021-11-20
+"Desert Solar H2","Dubai, UAE",SOEC,1200,85,operational,2023-06-10
+"Atlantic Wind Power H2","Scotland, UK",PEM,600,70,operational,2022-09-05
+"Mediterranean Green Energy","Barcelona, Spain",Alkaline,450,65,operational,2023-01-12
+"Pacific Renewable H2","Sydney, Australia",PEM,550,73,operational,2022-07-18
+"Alpine Hydro H2","Switzerland",SOEC,900,82,maintenance,2021-12-08
+"Asian Energy Hub","Singapore",PEM,700,71,operational,2023-04-22

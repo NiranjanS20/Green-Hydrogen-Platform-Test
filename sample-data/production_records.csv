@@ -1,0 +1,11 @@
+production_date,hydrogen_produced_kg,energy_consumed_kwh,water_consumed_liters,efficiency_percent,carbon_offset_kg,operating_hours,notes
+2024-10-01,480,18500,4320,72,5040,22,"Normal operations"
+2024-10-02,510,19200,4590,73,5355,23,"Peak efficiency day"
+2024-10-03,465,18800,4185,68,4883,21,"Slight efficiency drop"
+2024-10-04,520,19000,4680,75,5460,24,"Optimal performance"
+2024-10-05,495,19500,4455,70,5198,22,"Standard production"
+2024-10-06,440,18200,3960,67,4620,20,"Maintenance window"
+2024-10-07,530,19800,4770,74,5565,24,"High output day"
+2024-10-08,505,19300,4545,72,5303,23,"Normal operations"
+2024-10-09,485,18900,4365,71,5093,22,"Steady performance"
+2024-10-10,515,19400,4635,73,5408,23,"Above average"

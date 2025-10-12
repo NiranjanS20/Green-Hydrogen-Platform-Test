@@ -5,8 +5,8 @@ import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Select } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { calculateWaterConsumption, calculateCarbonOffset } from '@/lib/calculations';
 import { formatNumber } from '@/lib/utils';
@@ -20,11 +20,19 @@ export default function SimulationPage() {
   const waterUsed = calculateWaterConsumption(hydrogenProduced);
   const carbonOffset = calculateCarbonOffset(hydrogenProduced);
 
-  const simulationData = Array.from({ length: 7 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    hydrogen: hydrogenProduced + i * 5,
-    efficiency: efficiency + (i % 2 === 0 ? 1 : -1),
-  }));
+  const simulationData = Array.from({ length: 7 }, (_, i) => {
+    const day = `Day ${i + 1}`;
+    // Simulate daily fluctuation in energy input (e.g., solar availability)
+    const dailyEnergyFluctuation = Math.sin((i / 6) * Math.PI) * 0.2 + 0.9; // Varies between 0.9 and 1.1
+    const dailyEnergyInput = energyInput * dailyEnergyFluctuation;
+    const dailyHydrogenProduced = (dailyEnergyInput * efficiency) / (100 * 39.4);
+
+    return {
+      day,
+      hydrogen: dailyHydrogenProduced,
+      energy: dailyEnergyInput,
+    };
+  });
 
   return (
     <div className="p-6 space-y-8">
@@ -46,12 +54,12 @@ export default function SimulationPage() {
             </div>
             <div>
               <label className="text-sm font-medium">Storage Type</label>
-                <Select value={storageType} onChange={(e) => setStorageType(e.target.value)}>
-                  <option value="Compressed">Compressed</option>
-                  <option value="Liquid">Liquid</option>
-                  <option value="Metal Hydride">Metal Hydride</option>
-                  <option value="Underground">Underground</option>
-                </Select>
+              <Select value={storageType} onChange={(e) => setStorageType(e.target.value)}>
+                <option value="Compressed">Compressed</option>
+                <option value="Liquid">Liquid</option>
+                <option value="Metal Hydride">Metal Hydride</option>
+                <option value="Underground">Underground</option>
+              </Select>
             </div>
           </div>
 
@@ -93,8 +101,8 @@ export default function SimulationPage() {
                   <XAxis dataKey="day" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="hydrogen" stroke="#3B82F6" name="H₂ Produced" />
-                  <Line type="monotone" dataKey="efficiency" stroke="#10B981" name="Efficiency (%)" />
+                  <Line type="monotone" dataKey="hydrogen" stroke="#3B82F6" name="H₂ Produced (kg)" />
+                  <Line type="monotone" dataKey="energy" stroke="#F59E0B" name="Energy Input (kWh)" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

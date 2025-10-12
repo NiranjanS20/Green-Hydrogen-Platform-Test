@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import SideMenu from "@/components/SideMenu";
+import LayoutClient from "@/components/LayoutClient";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,7 @@ export default function RootLayout({
           <div className="flex">
             <SideMenu />
             <main className="flex-1 lg:ml-64">
-              {children}
+              <LayoutClient>{children}</LayoutClient>
             </main>
           </div>
         </div>

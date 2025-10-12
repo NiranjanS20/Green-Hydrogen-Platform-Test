@@ -1,0 +1,78 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "login": "Login",
+    "logout": "Sign Out",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "production": "Production",
+    "storage": "Storage",
+    "transportation": "Transportation",
+    "research": "Research",
+    "simulation": "Simulation",
+    "analytics": "Analytics",
+    "profile": "Profile"
+  },
+  "dashboard": {
+    "title": "Dashboard Overview",
+    "welcomeBack": "Welcome back, {{name}}!",
+    "subtitle": "Monitor your green hydrogen production ecosystem in real-time",
+    "totalProduction": "Total Production",
+    "energyConsumed": "Energy Consumed",
+    "carbonOffset": "Carbon Offset",
+    "avgEfficiency": "Avg Efficiency",
+    "activeFacilities": "Active Facilities",
+    "storageUtilization": "Storage Utilization"
+  },
+  "transportation": {
+    "title": "Hydrogen Transportation",
+    "subtitle": "Manage routes and monitor distribution efficiency",
+    "addRoute": "Add Route",
+    "routeName": "Route Name",
+    "origin": "Origin",
+    "destination": "Destination",
+    "transportType": "Transport Type",
+    "distance": "Distance",
+    "capacity": "Capacity",
+    "energyCost": "Energy Cost",
+    "pressureLoss": "Pressure Loss",
+    "activeRoutes": "Active Routes",
+    "totalCapacity": "Total Capacity",
+    "noRoutes": "No routes added yet",
+    "addFirstRoute": "Add Your First Route"
+  },
+  "chat": {
+    "title": "H2 AI Assistant",
+    "online": "Online",
+    "offline": "Offline",
+    "thinking": "Thinking...",
+    "placeholder": "Ask about hydrogen production...",
+    "greeting": "Hi! I'm your Green Hydrogen AI Assistant. I can help you with hydrogen production, storage, transportation, and more. What would you like to know?",
+    "quickQuestions": "Quick questions"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "createAccount": "Create Account",
+    "signInSubtitle": "Sign in to your account",
+    "signUpSubtitle": "Join the Green Hydrogen Platform",
+    "noAccount": "Don't have an account? Sign up",
+    "haveAccount": "Already have an account? Login",
+    "pleaseWait": "Please wait..."
+  }
+}

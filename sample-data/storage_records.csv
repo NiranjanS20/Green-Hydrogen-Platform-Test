@@ -1,0 +1,11 @@
+record_date,transaction_type,quantity_kg,pressure_bar,temperature_celsius,energy_used_kwh,notes
+2024-10-10T08:00:00Z,input,150,350,-40,45,"Morning delivery from Plant A"
+2024-10-10T10:30:00Z,output,80,345,-40,25,"Distribution to industrial client"
+2024-10-10T14:00:00Z,input,200,352,-40,60,"Afternoon production batch"
+2024-10-10T16:45:00Z,output,120,348,-40,35,"Transport to refueling station"
+2024-10-09T09:00:00Z,input,180,348,-40,54,"Morning operations"
+2024-10-09T13:30:00Z,output,95,345,-40,28,"Customer delivery"
+2024-10-09T17:00:00Z,input,160,350,-40,48,"Evening batch input"
+2024-10-08T08:30:00Z,input,175,351,-40,53,"Regular delivery"
+2024-10-08T11:00:00Z,output,110,347,-40,33,"Distribution run"
+2024-10-08T15:30:00Z,input,190,352,-40,57,"Peak production input"
