@@ -20,7 +20,14 @@ interface AdminData {
   transport: Record<string, unknown>[];
   users: Record<string, unknown>[];
   pendingAdmins: Record<string, unknown>[];
-  totalStats: Record<string, unknown>;
+  totalStats: {
+    totalProduction: number;
+    totalStorage: number;
+    totalRenewable: number;
+    totalUsers: number;
+    totalFacilities: number;
+    totalEnergyProduced: number;
+  };
 }
 
 export default function AdminPage() {
@@ -28,6 +35,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [lastActivity, setLastActivity] = useState(Date.now());
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AdminData>({
     production: [],
     storage: [],
@@ -35,7 +43,14 @@ export default function AdminPage() {
     transport: [],
     users: [],
     pendingAdmins: [],
-    totalStats: {}
+    totalStats: {
+      totalProduction: 0,
+      totalStorage: 0,
+      totalRenewable: 0,
+      totalUsers: 0,
+      totalFacilities: 0,
+      totalEnergyProduced: 0
+    }
   });
 
   // Session timeout check
