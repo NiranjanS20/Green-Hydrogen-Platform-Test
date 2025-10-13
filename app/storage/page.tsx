@@ -242,7 +242,7 @@ export default function StoragePage() {
       const estimatedHours = selectedRoute.distance_km / 60; // 60 km/h average
       const estimatedArrival = new Date(Date.now() + estimatedHours * 60 * 60 * 1000);
 
-      // Update transport route
+      // Update transport route - load the vehicle but DON'T update storage yet
       await supabase
         .from('transport_routes')
         .update({
@@ -253,18 +253,13 @@ export default function StoragePage() {
           status: 'in_transit',
           estimated_arrival: estimatedArrival.toISOString(),
           priority: transferData.priority,
+          destination_storage_id: toStorage.id, // Store destination for later
+          pending_delivery_kg: amount, // Store amount to be delivered
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedRoute.id);
 
-      // Reserve storage space
-      await supabase
-        .from('storage_facilities')
-        .update({
-          current_level_kg: toStorage.current_level_kg + amount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', toStorage.id);
+      // DON'T update storage facility yet - it will be updated when delivery completes
 
       // Add success alert
       setAlerts(prev => [...prev, {

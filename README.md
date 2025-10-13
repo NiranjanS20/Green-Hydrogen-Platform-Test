@@ -3,7 +3,7 @@
 A comprehensive full-stack hydrogen management platform built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, **HeroUI**, and **Supabase**. Designed for operational teams, researchers, and stakeholders to monitor, simulate, and optimize hydrogen production, storage, transportation, and analytics.
 
 ![Platform Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-3.0.0-blue)
+![Version](https://img.shields.io/badge/Version-3.0.1-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Mobile](https://img.shields.io/badge/Mobile-Responsive-green)
 ![Admin](https://img.shields.io/badge/Admin-System-red)
@@ -158,7 +158,8 @@ NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=hydrogen-data
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
 3. Copy and execute the contents of `database-setup.sql`
-4. Create a storage bucket named `hydrogen-data`
+4. **Run the transport migration**: Execute `database-migration-transport-fix.sql` for correct transport workflow
+5. Create a storage bucket named `hydrogen-data`
 
 ### **4. Run Development Server**
 ```bash
@@ -285,13 +286,17 @@ The platform features a complete end-to-end hydrogen supply chain with real depe
 2. **⚡ Energy Availability** → Calculate daily renewable energy production
 3. **🏭 Production Facilities** → H₂ production limited by available renewable energy
 4. **📊 Production Alerts** → Notify when facilities reach 80%+ daily capacity
-5. **🏪 Storage Selection** → Manual selection of storage facility with capacity checking
-6. **🚛 Route Selection** → Choose transport vehicle with capacity constraints
+5. **🏪 Storage Transfer** → Manual selection of storage facility with capacity checking
+6. **🚛 Vehicle Loading** → H₂ loads into transport vehicle (storage NOT updated yet)
 7. **🎯 Priority System** → High/urgent priority can override vehicle capacity limits
 8. **🚚 Transport Execution** → Real-time vehicle fill levels and progress tracking
-9. **📈 Live Dashboard** → System health monitoring and real-time alerts
+9. **📦 Delivery Completion** → H₂ delivered to storage facility (storage updated now)
+10. **📈 Live Dashboard** → System health monitoring and real-time alerts
 
 ### **Smart Features**
+- **Correct Transport Flow**: H₂ flows Production → Vehicle → Transport → Delivery → Storage
+- **Vehicle Load Tracking**: Real-time fill levels during transport (storage updates only on delivery)
+- **Pending Delivery System**: Tracks H₂ amount being transported to destination storage
 - **Energy Dependency**: Production automatically limited by renewable energy availability
 - **Capacity Constraints**: Vehicles can't exceed capacity unless priority override is used
 - **Real-Time Alerts**: Dashboard shows actual system issues (storage full, production ready, etc.)
@@ -385,7 +390,11 @@ For support and questions:
 
 **Status: Production Ready with Full Supply Chain Integration** 🚀
 
-### **Latest Updates (v3.0.0)**
+### **Latest Updates (v3.0.1)**
+- ✅ **Fixed Transport Workflow**: Proper H₂ flow through vehicles before storage update
+- ✅ **Correct Delivery Process**: Storage only updates when delivery completes
+- ✅ **Vehicle Load Tracking**: Real-time vehicle fill levels during transport
+- ✅ **Pending Delivery System**: Tracks H₂ amount being transported to destination
 - ✅ Complete supply chain integration with real dependencies
 - ✅ Smart logistics management with manual route selection
 - ✅ Real-time dashboard with live data updates (no mock data)

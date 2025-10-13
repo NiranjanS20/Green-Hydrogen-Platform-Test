@@ -341,12 +341,46 @@ export default function TransportationPage() {
         throw fetchError;
       }
 
+      // Update destination storage facility if there's a pending delivery
+      if (route.destination_storage_id && route.pending_delivery_kg) {
+        // First get current storage level
+        const { data: storageData, error: storageGetError } = await supabase
+          .from('storage_facilities')
+          .select('current_level_kg')
+          .eq('id', route.destination_storage_id)
+          .single();
+
+        if (storageGetError) {
+          console.error('Error getting storage data:', storageGetError);
+          throw storageGetError;
+        }
+
+        // Update with new level
+        const newLevel = (storageData.current_level_kg || 0) + route.pending_delivery_kg;
+        const { error: storageError } = await supabase
+          .from('storage_facilities')
+          .update({
+            current_level_kg: newLevel,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', route.destination_storage_id);
+
+        if (storageError) {
+          console.error('Error updating destination storage:', storageError);
+          throw storageError;
+        }
+
+        console.log(`✅ Delivered ${route.pending_delivery_kg} kg H₂ to storage facility`);
+      }
+
       // Update the route status to completed
       const { error: updateError } = await supabase
         .from('transport_routes')
         .update({ 
           status: 'completed',
           current_load_kg: 0, // Delivery completed, load is now 0
+          destination_storage_id: null, // Clear destination
+          pending_delivery_kg: 0, // Clear pending delivery
           updated_at: new Date().toISOString()
         })
         .eq('id', routeId);
