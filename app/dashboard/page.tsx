@@ -263,29 +263,29 @@ export default function DashboardPage() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 text-white">
-                <h1 className="text-4xl md:text-5xl font-bold mb-2">
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-4 sm:p-6 md:p-8 text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2">
                     {user?.full_name ? `Welcome back, ${user.full_name}!` : 'Dashboard Overview'}
                 </h1>
-                <p className="text-blue-100 text-lg">Monitor your green hydrogen production ecosystem in real-time</p>
+                <p className="text-blue-100 text-sm sm:text-base md:text-lg">Monitor your green hydrogen production ecosystem in real-time</p>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {quickActions.map((action, index) => (
                     <Link key={index} href={action.href}>
-                        <div className="glassmorphic-strong rounded-2xl p-6 text-center card-hover cursor-pointer group">
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                        <div className="glassmorphic-strong rounded-2xl p-3 sm:p-4 md:p-6 text-center card-hover cursor-pointer group">
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform`}>
                                 {action.icon}
                             </div>
-                            <p className="font-semibold text-gray-800">{action.label}</p>
+                            <p className="font-semibold text-gray-800 text-sm sm:text-base">{action.label}</p>
                         </div>
                     </Link>
                 ))}
             </div>
 
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Card className="border-2 border-blue-200">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <h3 className="text-sm font-medium text-gray-700">Total Production</h3>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Production Trends */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 <Card className="glassmorphic-strong border-2 border-white/40">
                     <CardHeader>
                         <h3 className="flex items-center gap-2 text-lg font-semibold">
@@ -346,23 +346,23 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardBody>
                         {productionData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={productionData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                    <XAxis dataKey="month" stroke="#6b7280" />
-                                    <YAxis stroke="#6b7280" />
-                                    <Tooltip contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
+                                    <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
+                                    <YAxis stroke="#6b7280" fontSize={12} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
                                     <Legend />
-                                    <Bar dataKey="production" fill="#3B82F6" name="Actual" radius={[8, 8, 0, 0]} />
-                                    <Bar dataKey="target" fill="#10B981" name="Target" radius={[8, 8, 0, 0]} />
+                                    <Bar dataKey="production" fill="#3B82F6" name="Actual" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="target" fill="#10B981" name="Target" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="flex items-center justify-center h-[300px] text-gray-500">
+                            <div className="flex items-center justify-center h-[250px] text-gray-500">
                                 <div className="text-center">
-                                    <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p>No production data available</p>
-                                    <p className="text-sm">Add production facilities to see charts</p>
+                                    <Activity className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm sm:text-base">No production data available</p>
+                                    <p className="text-xs sm:text-sm">Add production facilities to see charts</p>
                                 </div>
                             </div>
                         )}

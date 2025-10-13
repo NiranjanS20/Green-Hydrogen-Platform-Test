@@ -21,11 +21,22 @@ export default function SimulationPage() {
   const [electrolyzerType, setElectrolyzerType] = useState('pem');
   const [weatherCondition, setWeatherCondition] = useState('optimal');
   const [simulationSpeed, setSimulationSpeed] = useState(1);
+  const [weatherData, setWeatherData] = useState<any[]>([]);
+  const [scenarioType, setScenarioType] = useState('current'); // current, optimistic, pessimistic
   
   // Simulation state
   const [isRunning, setIsRunning] = useState(false);
   const [currentDay, setCurrentDay] = useState(0);
-  const [simulationData, setSimulationData] = useState([]);
+  const [simulationData, setSimulationData] = useState<Array<{
+    day: string;
+    hydrogen: number;
+    energy: number;
+    water: number;
+    carbonOffset: number;
+    efficiency: number;
+    status: string;
+    weather: string;
+  }>>([]);
   const [totalStats, setTotalStats] = useState({
     totalHydrogen: 0,
     totalEnergy: 0,
@@ -34,7 +45,7 @@ export default function SimulationPage() {
   });
 
   // Weather impact factors
-  const weatherFactors = {
+  const weatherFactors: Record<string, { solar: number; wind: number; efficiency: number }> = {
     optimal: { solar: 1.0, wind: 1.0, efficiency: 1.0 },
     cloudy: { solar: 0.6, wind: 0.8, efficiency: 0.95 },
     stormy: { solar: 0.3, wind: 1.2, efficiency: 0.9 },
@@ -42,15 +53,15 @@ export default function SimulationPage() {
   };
 
   // Electrolyzer specifications
-  const electrolyzerSpecs = {
+  const electrolyzerSpecs: Record<string, { baseEfficiency: number; cost: number; maintenance: number }> = {
     pem: { baseEfficiency: 75, cost: 1200, maintenance: 0.02 },
     alkaline: { baseEfficiency: 65, cost: 800, maintenance: 0.015 },
     soec: { baseEfficiency: 85, cost: 2000, maintenance: 0.025 }
   };
 
   // Calculate current production metrics
-  const currentWeather = weatherFactors[weatherCondition];
-  const currentElectrolyzer = electrolyzerSpecs[electrolyzerType];
+  const currentWeather = weatherFactors[weatherCondition] || weatherFactors.optimal;
+  const currentElectrolyzer = electrolyzerSpecs[electrolyzerType] || electrolyzerSpecs.pem;
   const adjustedEfficiency = (efficiency * currentWeather.efficiency * currentElectrolyzer.baseEfficiency) / 100;
   const adjustedEnergyInput = energyInput * currentWeather.solar * currentWeather.wind;
   
@@ -60,7 +71,7 @@ export default function SimulationPage() {
 
   // Simulation runner
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout;
     if (isRunning && currentDay < 30) {
       interval = setInterval(() => {
         const day = currentDay + 1;
@@ -213,7 +224,7 @@ export default function SimulationPage() {
               <label className="block text-sm font-medium mb-2">Energy Input (kWh/day)</label>
               <Input 
                 type="number" 
-                value={energyInput} 
+                value={energyInput.toString()} 
                 onChange={(e) => setEnergyInput(Number(e.target.value))}
                 startContent={<Zap className="w-4 h-4 text-yellow-600" />}
               />
@@ -223,7 +234,7 @@ export default function SimulationPage() {
               <label className="block text-sm font-medium mb-2">System Efficiency: {efficiency}%</label>
               <Slider 
                 value={efficiency}
-                onChange={setEfficiency}
+                onChange={(value) => setEfficiency(Array.isArray(value) ? value[0] : value)}
                 minValue={50}
                 maxValue={95}
                 step={1}
@@ -239,9 +250,9 @@ export default function SimulationPage() {
                 onChange={(e) => setElectrolyzerType(e.target.value)}
                 placeholder="Select electrolyzer"
               >
-                <SelectItem key="pem" value="pem">PEM (75% eff, $1200/kW)</SelectItem>
-                <SelectItem key="alkaline" value="alkaline">Alkaline (65% eff, $800/kW)</SelectItem>
-                <SelectItem key="soec" value="soec">SOEC (85% eff, $2000/kW)</SelectItem>
+                <SelectItem key="pem">PEM (75% eff, $1200/kW)</SelectItem>
+                <SelectItem key="alkaline">Alkaline (65% eff, $800/kW)</SelectItem>
+                <SelectItem key="soec">SOEC (85% eff, $2000/kW)</SelectItem>
               </Select>
             </div>
             
@@ -252,10 +263,10 @@ export default function SimulationPage() {
                 onChange={(e) => setWeatherCondition(e.target.value)}
                 placeholder="Select weather"
               >
-                <SelectItem key="optimal" value="optimal">☀️ Optimal</SelectItem>
-                <SelectItem key="sunny" value="sunny">🌞 Very Sunny</SelectItem>
-                <SelectItem key="cloudy" value="cloudy">☁️ Cloudy</SelectItem>
-                <SelectItem key="stormy" value="stormy">⛈️ Stormy</SelectItem>
+                <SelectItem key="optimal">☀️ Optimal</SelectItem>
+                <SelectItem key="sunny">🌞 Very Sunny</SelectItem>
+                <SelectItem key="cloudy">☁️ Cloudy</SelectItem>
+                <SelectItem key="stormy">⛈️ Stormy</SelectItem>
               </Select>
             </div>
             
@@ -266,10 +277,10 @@ export default function SimulationPage() {
                 onChange={(e) => setStorageType(e.target.value)}
                 placeholder="Select storage"
               >
-                <SelectItem key="compressed" value="compressed">🗜️ Compressed Gas</SelectItem>
-                <SelectItem key="liquid" value="liquid">❄️ Liquid H₂</SelectItem>
-                <SelectItem key="metal_hydride" value="metal_hydride">🔗 Metal Hydride</SelectItem>
-                <SelectItem key="underground" value="underground">🕳️ Underground</SelectItem>
+                <SelectItem key="compressed">🗜️ Compressed Gas</SelectItem>
+                <SelectItem key="liquid">❄️ Liquid H₂</SelectItem>
+                <SelectItem key="metal_hydride">🔗 Metal Hydride</SelectItem>
+                <SelectItem key="underground">🕳️ Underground</SelectItem>
               </Select>
             </div>
             
@@ -277,7 +288,7 @@ export default function SimulationPage() {
               <label className="block text-sm font-medium mb-2">Simulation Speed: {simulationSpeed}x</label>
               <Slider 
                 value={simulationSpeed}
-                onChange={setSimulationSpeed}
+                onChange={(value) => setSimulationSpeed(Array.isArray(value) ? value[0] : value)}
                 minValue={0.5}
                 maxValue={5}
                 step={0.5}

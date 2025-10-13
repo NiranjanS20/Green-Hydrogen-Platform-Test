@@ -75,19 +75,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-white/90 backdrop-blur-md border-r border-gray-200 transform transition-transform duration-200 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="h-16 flex items-center justify-between px-4 border-b">
           <Link href="/dashboard" className="text-lg font-bold gradient-text">🌿 Green Hydrogen</Link>
-          <button className="md:hidden p-2" onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden p-2" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
           {navItems.map(item => (
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-50 hover:text-blue-700 ${active?.startsWith(item.href) ? 'bg-blue-100 text-blue-700' : 'text-gray-700'}`}
+              className={`block px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors ${pathname === item.href ? 'bg-blue-100 text-blue-700' : 'text-gray-700'}`}
               onClick={() => setSidebarOpen(false)}
             >
               {item.label}
@@ -98,46 +98,49 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main area */}
-      <div className="flex-1 md:ml-64">
+      <div className="flex-1">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-md border-b">
-          <div className="h-16 px-4 flex items-center justify-between">
+        <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b">
+          <div className="h-16 px-3 sm:px-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button className="md:hidden p-2 rounded-md hover:bg-gray-100" onClick={() => setSidebarOpen(true)}>
+              <button className="lg:hidden p-2 rounded-md hover:bg-gray-100" onClick={() => setSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </button>
-              <span className="hidden md:inline text-sm text-gray-600">{navItems.find(n => active?.startsWith(n.href))?.label || 'Overview'}</span>
+              <span className="hidden sm:inline text-sm text-gray-600 truncate">{navItems.find(n => pathname === n.href)?.label || 'Overview'}</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <LanguageSwitcher />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="hidden sm:block">
+                <LanguageSwitcher />
+              </div>
               {user ? (
-                <div className="flex items-center gap-3">
-                  <Link href="/profile" className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                <div className="flex items-center gap-1 sm:gap-3">
+                  <Link href="/profile" className="flex items-center gap-2 hover:bg-gray-50 rounded-lg p-1 sm:p-2 transition-colors">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">
                       {user?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <div className="hidden md:block">
-                      <p className="text-sm font-medium text-gray-900">{user?.full_name || 'User'}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate max-w-24">{user?.full_name || 'User'}</p>
                       <p className="text-xs text-gray-500">{user?.role || 'Operator'}</p>
                     </div>
                   </Link>
-                  <button onClick={handleSignOut} className="text-xs text-red-600 hover:underline flex items-center gap-1 ml-2">
-                    <LogOut className="w-3 h-3" /> Sign out
+                  <button onClick={handleSignOut} className="text-xs text-red-600 hover:underline flex items-center gap-1 p-1">
+                    <LogOut className="w-3 h-3" /> 
+                    <span className="hidden sm:inline">Sign out</span>
                   </button>
                 </div>
               ) : (
-                <Link href="/login" className="text-sm text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md">Login</Link>
+                <Link href="/login" className="text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1.5 rounded-md">Login</Link>
               )}
             </div>
           </div>
         </header>
 
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

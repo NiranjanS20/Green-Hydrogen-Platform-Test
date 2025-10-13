@@ -1,10 +1,14 @@
 # 🌱 Green Hydrogen Platform
 
-A comprehensive full-stack hydrogen management platform built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, and **Supabase**. Designed for operational teams, researchers, and stakeholders to monitor, simulate, and optimize hydrogen production, storage, transportation, and analytics.
+A comprehensive full-stack hydrogen management platform built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, **HeroUI**, and **Supabase**. Designed for operational teams, researchers, and stakeholders to monitor, simulate, and optimize hydrogen production, storage, transportation, and analytics.
 
 ![Platform Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Version](https://img.shields.io/badge/Version-3.0.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Mobile](https://img.shields.io/badge/Mobile-Responsive-green)
+![Admin](https://img.shields.io/badge/Admin-System-red)
+![Live Data](https://img.shields.io/badge/Live%20Data-Real%20Time-orange)
+![Integrated](https://img.shields.io/badge/Supply%20Chain-Fully%20Integrated-purple)
 
 ---
 
@@ -13,21 +17,30 @@ A comprehensive full-stack hydrogen management platform built with **Next.js 15*
 ### **Core Modules**
 - **🏭 Production Management**: Track hydrogen facilities, electrolyzer efficiency, and production metrics
 - **🗄️ Storage Management**: Monitor tank levels, pressure, temperature, and safety status
-- **🚛 Transportation Routes**: Manage tube trailers, pipelines, and tankers with cost optimization
-- **⚡ Simulation Engine**: Run hydrogen production simulations with scientific accuracy
+- **🚛 Transportation Routes**: Advanced delivery management with real-time tracking and optimization
+- **⚡ Simulation Engine**: Interactive 30-day simulations with weather conditions and economic analysis
 - **🌿 Renewable Sources**: Connect solar, wind, and hydro sources with capacity tracking
-- **📊 Analytics Dashboard**: Visualize KPIs, trends, and performance metrics
+- **📊 Analytics Dashboard**: Real-time data visualization with dynamic charts from Supabase
 - **📚 Research Papers**: Browse and manage hydrogen-related publications with file uploads
-- **👤 User Authentication**: Secure login, signup, and profile management
-- **📁 File Management**: Upload and manage documents, reports, and research papers
+- **👤 User Authentication**: Secure login, signup, and profile management with role-based access
+- **🔒 Admin System**: Password-protected admin panel with user management and system monitoring
 
 ### **Advanced Features**
-- **Scientific Calculations**: Research-based formulas for water consumption, carbon offset, and efficiency
-- **Real-time Monitoring**: Live updates for facility status and performance metrics
-- **Data Visualization**: Interactive charts and graphs using Recharts
-- **Type Safety**: Full TypeScript implementation with comprehensive type definitions
-- **Responsive Design**: Mobile-first design with Tailwind CSS
-- **Secure Storage**: File uploads with Supabase Storage and RLS policies
+- **🔄 Fully Integrated Supply Chain**: Complete workflow from renewable energy → production → storage → transport
+- **🚚 Smart Logistics Management**: Manual route selection, capacity constraints, priority overrides
+- **📊 Real-Time Dashboard**: Live data updates every 30 seconds with system health monitoring
+- **🚨 Intelligent Alerts**: Production capacity warnings, storage level alerts, transport notifications
+- **⚡ Energy-Dependent Production**: H₂ production limited by actual renewable energy availability
+- **🎯 Capacity Management**: Vehicle fill levels, storage utilization, production progress tracking
+- **📱 Mobile Responsive**: Fully optimized for mobile devices with touch-friendly interface
+- **🎮 Interactive Simulation**: Real-time 30-day simulation with variable speed and weather conditions
+- **📈 Real Data Integration**: All dashboards show actual data from Supabase instead of mock data
+- **🔐 Session Management**: Device-specific authentication - users stay logged in per device/browser
+- **⚡ Route Optimization**: Efficiency-based route sorting and ETA calculations
+- **🎨 Modern UI**: HeroUI components with glassmorphic design and smooth animations
+- **🔒 Admin Controls**: Single admin system with approval workflow and user role management
+- **📊 Live Charts**: Dynamic production, energy mix, and efficiency charts from real facility data
+- **🚀 Production Ready**: Optimized for Vercel deployment with proper error handling
 
 ---
 
@@ -37,9 +50,10 @@ A comprehensive full-stack hydrogen management platform built with **Next.js 15*
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **UI Components**: Custom component library with Radix UI primitives
-- **Charts**: Recharts for data visualization
+- **UI Components**: HeroUI (NextUI v2) with modern design system
+- **Charts**: Recharts for interactive data visualization
 - **Icons**: Lucide React
+- **Animations**: Framer Motion for smooth transitions
 
 ### **Backend**
 - **Database**: Supabase (PostgreSQL)
@@ -241,16 +255,99 @@ Ensure these are set in your deployment platform:
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Authentication | ✅ Complete | Supabase Auth integration |
-| Production Management | ✅ Complete | Full CRUD with metrics |
-| Storage Management | ✅ Complete | Tank monitoring and transactions |
-| Transportation | ✅ Complete | Route and vehicle management |
-| Renewable Sources | ✅ Complete | Energy source tracking |
+| Authentication | ✅ Complete | Supabase Auth with device-specific sessions |
+| Production Management | ✅ Complete | Full CRUD with real-time metrics and energy dependency |
+| Storage Management | ✅ Complete | Tank monitoring, manual route selection, capacity alerts |
+| Transportation | ✅ Complete | Vehicle fill levels, priority overrides, capacity management |
+| Renewable Sources | ✅ Complete | Energy source tracking with production integration |
 | Research Papers | ✅ Complete | Document management with uploads |
-| Analytics | ✅ Complete | KPI dashboards and charts |
+| Analytics Dashboard | ✅ Complete | Live data updates, system health, real-time alerts |
+| Admin System | ✅ Complete | Password-protected admin panel |
 | File Upload | ✅ Complete | Drag & drop with Supabase Storage |
-| Simulation Engine | ✅ Complete | Scientific calculation engine |
-| Mobile Responsive | ✅ Complete | Tailwind CSS responsive design |
+| Simulation Engine | ✅ Complete | Interactive 30-day simulation with weather integration |
+| Mobile Responsive | ✅ Complete | Fully optimized for mobile devices |
+| Route Optimization | ✅ Complete | Efficiency-based routing and ETA |
+| Real Data Integration | ✅ Complete | All charts show actual Supabase data (no mock data) |
+| Delivery Tracking | ✅ Complete | Start/complete deliveries with progress |
+| Supply Chain Integration | ✅ Complete | End-to-end workflow with real dependencies |
+| Smart Alerts System | ✅ Complete | Production, storage, transport, and energy alerts |
+| Capacity Management | ✅ Complete | Vehicle loads, storage utilization, production limits |
+| Priority Override System | ✅ Complete | High/urgent priority can override capacity limits |
+
+---
+
+## 🔄 Integrated Supply Chain Workflow
+
+The platform features a complete end-to-end hydrogen supply chain with real dependencies:
+
+### **Workflow Steps**
+1. **🌿 Renewable Energy Sources** → Generate power (solar, wind, hydro)
+2. **⚡ Energy Availability** → Calculate daily renewable energy production
+3. **🏭 Production Facilities** → H₂ production limited by available renewable energy
+4. **📊 Production Alerts** → Notify when facilities reach 80%+ daily capacity
+5. **🏪 Storage Selection** → Manual selection of storage facility with capacity checking
+6. **🚛 Route Selection** → Choose transport vehicle with capacity constraints
+7. **🎯 Priority System** → High/urgent priority can override vehicle capacity limits
+8. **🚚 Transport Execution** → Real-time vehicle fill levels and progress tracking
+9. **📈 Live Dashboard** → System health monitoring and real-time alerts
+
+### **Smart Features**
+- **Energy Dependency**: Production automatically limited by renewable energy availability
+- **Capacity Constraints**: Vehicles can't exceed capacity unless priority override is used
+- **Real-Time Alerts**: Dashboard shows actual system issues (storage full, production ready, etc.)
+- **Manual Control**: Users select specific routes and can override constraints for urgent deliveries
+- **Live Updates**: All data refreshes every 30 seconds with timestamp indicators
+
+### **Alert System**
+- **🔴 Urgent**: Storage 95%+ full, production 95%+ complete
+- **🟡 High**: Storage 85%+ full, production 80%+ complete, delayed deliveries
+- **🔵 Medium**: Low storage levels, no production recorded today
+- **🟢 Info**: Successful transfers, completed deliveries
+
+---
+
+## 📱 Mobile Responsiveness
+
+The platform is fully optimized for mobile devices with:
+
+- **Responsive Navigation**: Collapsible sidebar with smooth animations
+- **Touch-Friendly Interface**: Optimized button sizes and spacing
+- **Mobile Charts**: Responsive charts that adapt to screen size
+- **Optimized Typography**: Scalable text sizes for different screen sizes
+- **Mobile-First Design**: Built with mobile users in mind
+- **Cross-Device Sessions**: Users stay logged in per device/browser
+
+### **Breakpoints**
+- **Mobile**: `< 640px` - Single column layout, compact navigation
+- **Tablet**: `640px - 1024px` - Two column grids, expanded sidebar
+- **Desktop**: `> 1024px` - Full multi-column layout, persistent sidebar
+
+---
+
+## 🔒 Admin System
+
+Comprehensive admin panel with advanced user management:
+
+### **Admin Features**
+- **Password Protection**: Secure access with `M@nthan290719`
+- **Session Timeout**: 1-minute auto-logout for security
+- **Single Admin Control**: Only one active admin at a time
+- **User Management**: Change roles, approve admin requests, remove users
+- **System Monitoring**: View all facilities, routes, and user data
+- **Data Export**: CSV/JSON export for all system data
+
+### **Admin Workflow**
+1. **Admin Request**: Users can request admin role from profile page
+2. **Approval Process**: Existing admin approves/rejects requests
+3. **Role Management**: Admin can change user roles (operator/manager/engineer/admin)
+4. **User Removal**: Admin can remove users from the system
+5. **Data Oversight**: Admin sees all data across all users
+
+### **Security Features**
+- Password-protected access
+- Activity-based session timeout
+- Single admin restriction
+- Audit trail for admin actions
 
 ---
 
@@ -286,4 +383,17 @@ For support and questions:
 - Optimized for government and industrial stakeholders
 - Ready for MVP deployment and stakeholder demonstrations
 
-**Status: Production Ready** 🚀
+**Status: Production Ready with Full Supply Chain Integration** 🚀
+
+### **Latest Updates (v3.0.0)**
+- ✅ Complete supply chain integration with real dependencies
+- ✅ Smart logistics management with manual route selection
+- ✅ Real-time dashboard with live data updates (no mock data)
+- ✅ Intelligent alert system based on actual facility status
+- ✅ Vehicle capacity management with priority overrides
+- ✅ Energy-dependent production limiting
+- ✅ System health monitoring with color-coded status
+- ✅ Enhanced storage management with production status display
+- ✅ Transportation page with vehicle fill level indicators
+
+**Ready for enterprise deployment and stakeholder demonstrations!** 🌟

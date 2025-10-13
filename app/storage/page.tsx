@@ -1,235 +1,299 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Button } from '@heroui/react';
+import { Input } from '@heroui/react';
+import { Chip } from '@heroui/react';
+import { Progress } from '@heroui/react';
+import { Select, SelectItem } from '@heroui/react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react';
+import { Divider } from '@heroui/react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown, Activity } from 'lucide-react';
-import { supabase, getCurrentUser, StorageFacility, StorageRecord } from '@/lib/supabase';
-import { calculateStorageUtilization, calculateCompressionEnergy, calculateLiquefactionEnergy } from '@/lib/calculations';
-import { formatNumber, formatDate, formatDateTime, getStatusColor } from '@/lib/utils';
+import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown, Activity, Truck, Route, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { supabase, getCurrentUser } from '@/lib/supabase';
+
+type StorageFacility = {
+  id: string;
+  user_id: string;
+  name: string;
+  location: string;
+  storage_type: 'compressed' | 'liquid' | 'metal_hydride' | 'underground';
+  capacity_kg: number;
+  current_level_kg: number;
+  pressure_bar: number;
+  temperature_celsius: number;
+  status: string;
+  created_at: string;
+};
+
+type ProductionFacility = {
+  id: string;
+  name: string;
+  location: string;
+  capacity_kg_per_day: number;
+  current_production_kg: number;
+  status: string;
+};
+
+type TransportRoute = {
+  id: string;
+  route_name: string;
+  transport_type: string;
+  capacity_kg: number;
+  current_load_kg: number;
+  status: string;
+  distance_km: number;
+  energy_cost_kwh: number;
+};
 
 export default function StoragePage() {
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState<StorageFacility[]>([]);
-  const [storageRecords, setStorageRecords] = useState<StorageRecord[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [selectedFacility, setSelectedFacility] = useState<StorageFacility | null>(null);
+  const [productionFacilities, setProductionFacilities] = useState<ProductionFacility[]>([]);
+  const [transportRoutes, setTransportRoutes] = useState<TransportRoute[]>([]);
+  const [alerts, setAlerts] = useState<Array<{id: string; type: 'warning' | 'error' | 'info'; message: string}>>([]);
+  
+  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
+  const { isOpen: isTransferOpen, onOpen: onTransferOpen, onClose: onTransferClose } = useDisclosure();
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
   const [newFacility, setNewFacility] = useState({
     name: '',
     location: '',
-    storage_type: 'compressed' as 'compressed' | 'liquid' | 'metal_hydride' | 'underground',
-    capacity_kg: 0,
-    pressure_bar: 350,
-    temperature_celsius: 20
+    storage_type: 'compressed',
+    capacity_kg: '',
+    pressure_bar: '350',
+    temperature_celsius: '20'
   });
 
-  const [transaction, setTransaction] = useState({
-    transaction_type: 'input' as 'input' | 'output',
-    quantity_kg: 0,
+  const [transferData, setTransferData] = useState({
+    fromFacilityId: '',
+    toStorageId: '',
+    amount: '',
+    priority: 'medium',
+    selectedRouteId: '',
     notes: ''
   });
 
-  const storageUtilizationData = [
-    { name: 'Compressed A', value: 76, color: '#3B82F6' },
-    { name: 'Liquid B', value: 82, color: '#8B5CF6' },
-    { name: 'Underground C', value: 64, color: '#10B981' }
-  ];
-
-  const storageTransactions = [
-    { date: '2024-01-01', input: 450, output: 320, net: 130 },
-    { date: '2024-01-02', input: 480, output: 350, net: 130 },
-    { date: '2024-01-03', input: 520, output: 380, net: 140 },
-    { date: '2024-01-04', input: 495, output: 400, net: 95 },
-    { date: '2024-01-05', input: 540, output: 420, net: 120 },
-    { date: '2024-01-06', input: 565, output: 450, net: 115 },
-    { date: '2024-01-07', input: 590, output: 480, net: 110 }
-  ];
-
-  const temperaturePressureData = [
-    { time: '00:00', temp: 20, pressure: 350 },
-    { time: '04:00', temp: 21, pressure: 352 },
-    { time: '08:00', temp: 23, pressure: 355 },
-    { time: '12:00', temp: 25, pressure: 358 },
-    { time: '16:00', temp: 24, pressure: 356 },
-    { time: '20:00', temp: 22, pressure: 353 },
-    { time: '24:00', temp: 20, pressure: 350 }
-  ];
-
   useEffect(() => {
-    loadStorageData();
+    loadData();
   }, []);
 
-  const loadStorageData = async () => {
+  const loadData = async () => {
     try {
       const { user: currentUser } = await getCurrentUser();
       setUser(currentUser);
 
       if (currentUser) {
-        console.log('Loading storage data for user:', currentUser.id);
-        
         // Load storage facilities
-        const { data: facilitiesData, error: facilitiesError } = await supabase
+        const { data: storageData } = await supabase
           .from('storage_facilities')
           .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false });
 
-        if (facilitiesError) {
-          console.error('Error loading facilities:', facilitiesError);
-        } else {
-          console.log('Loaded facilities:', facilitiesData);
-          setFacilities(facilitiesData || []);
-        }
+        // Load production facilities
+        const { data: productionData } = await supabase
+          .from('production_facilities')
+          .select('*')
+          .eq('user_id', currentUser.id);
 
-        // Load storage records
-        const { data: recordsData, error: recordsError } = await supabase
-          .from('storage_records')
-          .select(`
-            *,
-            storage_facilities!inner(user_id)
-          `)
-          .eq('storage_facilities.user_id', currentUser.id)
-          .order('transaction_date', { ascending: false })
-          .limit(50);
+        // Load transport routes
+        const { data: routesData } = await supabase
+          .from('transport_routes')
+          .select('*')
+          .eq('user_id', currentUser.id);
 
-        if (recordsError) {
-          console.error('Error loading records:', recordsError);
-        } else {
-          console.log('Loaded records:', recordsData);
-          setStorageRecords(recordsData || []);
-        }
+        setFacilities(storageData || []);
+        setProductionFacilities(productionData || []);
+        setTransportRoutes(routesData || []);
+
+        // Check for capacity alerts
+        checkCapacityAlerts(storageData || [], productionData || []);
       }
     } catch (error) {
-      console.error('Error loading storage data:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkCapacityAlerts = (storageFacilities: StorageFacility[], productionFacilities: ProductionFacility[]) => {
+    const newAlerts: Array<{id: string; type: 'warning' | 'error' | 'info'; message: string}> = [];
+
+    // Check storage capacity alerts
+    storageFacilities.forEach(facility => {
+      const utilization = (facility.current_level_kg / facility.capacity_kg) * 100;
+      
+      if (utilization >= 95) {
+        newAlerts.push({
+          id: `storage-full-${facility.id}`,
+          type: 'error',
+          message: `${facility.name}: Storage 95% full (${Math.round(utilization)}%) - Urgent action required!`
+        });
+      } else if (utilization >= 80) {
+        newAlerts.push({
+          id: `storage-high-${facility.id}`,
+          type: 'warning',
+          message: `${facility.name}: Storage ${Math.round(utilization)}% full - Consider transport to other facilities`
+        });
+      }
+    });
+
+    // Check production facility alerts (simulated daily production)
+    productionFacilities.forEach(facility => {
+      if (facility.status === 'operational') {
+        // Simulate current production level (0-100% of daily capacity)
+        const currentProduction = Math.random() * (facility.capacity_kg_per_day || 0);
+        const productionPercent = (currentProduction / (facility.capacity_kg_per_day || 1)) * 100;
+        
+        if (productionPercent >= 90) {
+          newAlerts.push({
+            id: `production-full-${facility.id}`,
+            type: 'warning',
+            message: `${facility.name}: Daily production 90% complete - Assign storage and transport soon!`
+          });
+        }
+      }
+    });
+
+    setAlerts(newAlerts);
   };
 
   const handleAddFacility = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('storage_facilities')
         .insert([{
           user_id: user.id,
           name: newFacility.name,
           location: newFacility.location,
           storage_type: newFacility.storage_type,
-          capacity_kg: newFacility.capacity_kg,
+          capacity_kg: parseFloat(newFacility.capacity_kg),
           current_level_kg: 0,
-          pressure_bar: newFacility.pressure_bar,
-          temperature_celsius: newFacility.temperature_celsius,
-          status: 'operational',
-          last_inspection_date: new Date().toISOString().split('T')[0]
-        }])
-        .select();
+          pressure_bar: parseFloat(newFacility.pressure_bar),
+          temperature_celsius: parseFloat(newFacility.temperature_celsius),
+          status: 'operational'
+        }]);
 
       if (error) throw error;
 
-      setFacilities([...facilities, data[0]]);
-      setShowAddModal(false);
       setNewFacility({
         name: '',
         location: '',
         storage_type: 'compressed',
-        capacity_kg: 0,
-        pressure_bar: 350,
-        temperature_celsius: 20
+        capacity_kg: '',
+        pressure_bar: '350',
+        temperature_celsius: '20'
       });
+      onAddClose();
+      loadData();
     } catch (error) {
       console.error('Error adding facility:', error);
-      alert('Failed to add facility: ' + (error as any)?.message || 'Unknown error');
     }
   };
 
-  const handleAddTransaction = async () => {
-    if (!selectedFacility || !user) return;
+  const getAvailableRoutes = (fromLocation: string, toLocation: string, requiredCapacity: number) => {
+    return transportRoutes.filter(route => {
+      const availableCapacity = route.capacity_kg - route.current_load_kg;
+      const isAvailable = route.status === 'scheduled' || route.status === 'completed';
+      
+      // For high/urgent priority, allow override of capacity
+      const canOverride = transferData.priority === 'high' || transferData.priority === 'urgent';
+      
+      return isAvailable && (availableCapacity >= requiredCapacity || canOverride);
+    });
+  };
+
+  const handleTransfer = async () => {
+    if (!user) return;
 
     try {
-      const newLevel = transaction.transaction_type === 'input'
-        ? selectedFacility.current_level_kg + transaction.quantity_kg
-        : selectedFacility.current_level_kg - transaction.quantity_kg;
+      const amount = parseFloat(transferData.amount);
+      const selectedRoute = transportRoutes.find(r => r.id === transferData.selectedRouteId);
+      const fromFacility = productionFacilities.find(f => f.id === transferData.fromFacilityId);
+      const toStorage = facilities.find(f => f.id === transferData.toStorageId);
 
-      if (newLevel < 0 || newLevel > selectedFacility.capacity_kg) {
-        alert('Invalid transaction: would exceed storage limits');
+      if (!selectedRoute || !fromFacility || !toStorage) {
+        alert('Please select all required fields');
         return;
       }
 
-      const { data: recordData, error: recordError } = await supabase
-        .from('storage_records')
-        .insert([{
-          storage_id: selectedFacility.id,
-          record_date: new Date().toISOString(),
-          transaction_type: transaction.transaction_type,
-          quantity_kg: transaction.quantity_kg,
-          pressure_bar: selectedFacility.pressure_bar,
-          temperature_celsius: selectedFacility.temperature_celsius,
-          notes: transaction.notes
-        }])
-        .select();
+      // Check capacity constraints
+      const routeAvailableCapacity = selectedRoute.capacity_kg - selectedRoute.current_load_kg;
+      const storageAvailableCapacity = toStorage.capacity_kg - toStorage.current_level_kg;
+      const canOverride = transferData.priority === 'high' || transferData.priority === 'urgent';
 
-      if (recordError) throw recordError;
+      if (amount > routeAvailableCapacity && !canOverride) {
+        alert(`Route capacity exceeded! Available: ${routeAvailableCapacity} kg, Requested: ${amount} kg. Use High/Urgent priority to override.`);
+        return;
+      }
 
-      const { error: updateError } = await supabase
+      if (amount > storageAvailableCapacity) {
+        alert(`Storage capacity exceeded! Available: ${storageAvailableCapacity} kg, Requested: ${amount} kg`);
+        return;
+      }
+
+      // Calculate transport time and energy
+      const estimatedHours = selectedRoute.distance_km / 60; // 60 km/h average
+      const estimatedArrival = new Date(Date.now() + estimatedHours * 60 * 60 * 1000);
+
+      // Update transport route
+      await supabase
+        .from('transport_routes')
+        .update({
+          route_name: `${fromFacility.name} → ${toStorage.name}`,
+          origin: fromFacility.location,
+          destination: toStorage.location,
+          current_load_kg: selectedRoute.current_load_kg + amount,
+          status: 'in_transit',
+          estimated_arrival: estimatedArrival.toISOString(),
+          priority: transferData.priority,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedRoute.id);
+
+      // Reserve storage space
+      await supabase
         .from('storage_facilities')
-        .update({ current_level_kg: newLevel })
-        .eq('id', selectedFacility.id);
+        .update({
+          current_level_kg: toStorage.current_level_kg + amount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', toStorage.id);
 
-      if (updateError) throw updateError;
+      // Add success alert
+      setAlerts(prev => [...prev, {
+        id: `transfer-${Date.now()}`,
+        type: 'info',
+        message: `✅ Transfer initiated: ${amount} kg H₂ from ${fromFacility.name} to ${toStorage.name} via ${selectedRoute.route_name} (${transferData.priority} priority)`
+      }]);
 
-      const updatedFacilities = facilities.map(f =>
-        f.id === selectedFacility.id ? { ...f, current_level_kg: newLevel } : f
-      );
-      setFacilities(updatedFacilities);
-      setStorageRecords([recordData[0], ...storageRecords]);
-      setShowTransactionModal(false);
-      setTransaction({ transaction_type: 'input', quantity_kg: 0, notes: '' });
+      setTransferData({
+        fromFacilityId: '',
+        toStorageId: '',
+        amount: '',
+        priority: 'medium',
+        selectedRouteId: '',
+        notes: ''
+      });
+      onTransferClose();
+      loadData();
+
     } catch (error) {
-      console.error('Error adding transaction:', error);
+      console.error('Error initiating transfer:', error);
     }
   };
 
-  const handleDeleteFacility = async (facilityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('storage_facilities')
-        .delete()
-        .eq('id', facilityId);
-
-      if (error) throw error;
-      setFacilities(facilities.filter(f => f.id !== facilityId));
-    } catch (error) {
-      console.error('Error deleting facility:', error);
-    }
-  };
-
-  const getTotalCapacity = () => {
-    return facilities.reduce((sum, f) => sum + f.capacity_kg, 0);
-  };
-
-  const getTotalStored = () => {
-    return facilities.reduce((sum, f) => sum + f.current_level_kg, 0);
-  };
-
-  const getAverageUtilization = () => {
-    if (facilities.length === 0) return 0;
-    const totalUtil = facilities.reduce((sum, f) => sum + calculateStorageUtilization(f.current_level_kg, f.capacity_kg), 0);
-    return totalUtil / facilities.length;
-  };
-
-  const getTotalCompressionEnergy = () => {
-    return facilities
-      .filter(f => f.storage_type === 'compressed')
-      .reduce((sum, f) => sum + calculateCompressionEnergy(f.current_level_kg, f.pressure_bar || 350), 0);
+  const getStorageColor = (utilization: number) => {
+    if (utilization >= 90) return 'danger';
+    if (utilization >= 70) return 'warning';
+    if (utilization >= 50) return 'primary';
+    return 'success';
   };
 
   if (loading) {
@@ -241,670 +305,419 @@ export default function StoragePage() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between glassmorphic-strong rounded-2xl p-6">
+      <motion.div 
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <div>
-          <h1 className="text-4xl font-bold gradient-text mb-2">Storage Management</h1>
-          <p className="text-gray-700">Monitor hydrogen storage facilities and inventory levels</p>
+          <h1 className="text-3xl font-bold text-gray-900">🏪 Storage Management</h1>
+          <p className="text-gray-600 mt-1">Monitor storage levels, manage transfers, and optimize logistics</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-          <Plus className="w-5 h-5 mr-2" />
-          Add Storage
-        </Button>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Total Capacity</CardTitle>
-            <Database className="w-4 h-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{formatNumber(getTotalCapacity(), 0)} kg</div>
-            <p className="text-xs text-gray-600 mt-2">{facilities.length} storage facilities</p>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Current Stored</CardTitle>
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{formatNumber(getTotalStored(), 0)} kg</div>
-            <p className="text-xs text-gray-600 mt-2">{formatNumber((getTotalStored() / getTotalCapacity()) * 100, 1)}% of capacity</p>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Avg Utilization</CardTitle>
-            <Gauge className="w-4 h-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{formatNumber(getAverageUtilization(), 1)}%</div>
-            <Progress value={getAverageUtilization()} className="mt-3" />
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Compression Energy</CardTitle>
-            <Thermometer className="w-4 h-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600">{formatNumber(getTotalCompressionEnergy(), 0)} kWh</div>
-            <p className="text-xs text-gray-600 mt-2">For stored volume</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Storage Transactions Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              Storage Transactions (Last 7 Days)
-            </CardTitle>
-            <CardDescription>Input, output, and net storage changes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={storageTransactions}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" tickFormatter={(val) => new Date(val).getDate().toString()} />
-                <YAxis stroke="#6b7280" />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
-                <Legend />
-                <Bar dataKey="input" fill="#10B981" name="Input (kg)" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="output" fill="#EF4444" name="Output (kg)" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="net" fill="#3B82F6" name="Net Change (kg)" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-purple-600" />
-              Storage Utilization
-            </CardTitle>
-            <CardDescription>Capacity utilization by facility</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={storageUtilizationData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={false}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {storageUtilizationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Temperature and Pressure Monitoring */}
-      <Card className="glassmorphic-strong border-2 border-white/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Thermometer className="w-5 h-5 text-orange-600" />
-            Temperature & Pressure Monitoring
-          </CardTitle>
-          <CardDescription>Real-time environmental conditions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={temperaturePressureData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="time" stroke="#6b7280" />
-              <YAxis yAxisId="left" stroke="#6b7280" label={{ value: 'Temp (°C)', angle: -90, position: 'insideLeft' }} />
-              <YAxis yAxisId="right" orientation="right" stroke="#6b7280" label={{ value: 'Pressure (bar)', angle: 90, position: 'insideRight' }} />
-              <Tooltip contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="temp" stroke="#F59E0B" strokeWidth={3} name="Temperature (°C)" dot={{ r: 4 }} />
-              <Line yAxisId="right" type="monotone" dataKey="pressure" stroke="#8B5CF6" strokeWidth={3} name="Pressure (bar)" dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Storage Facilities List */}
-      <Card className="glassmorphic-strong border-2 border-white/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-purple-600" />
-            Storage Facilities
-          </CardTitle>
-          <CardDescription>Manage your hydrogen storage infrastructure</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {facilities.length === 0 ? (
-            <div className="text-center py-12">
-              <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Storage Facilities</h3>
-              <p className="text-gray-600 mb-6">Add your first storage facility to start managing inventory</p>
-              <Button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                <Plus className="w-5 h-5 mr-2" />
-                Add Storage
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {facilities.map((facility) => {
-                const utilization = calculateStorageUtilization(facility.current_level_kg, facility.capacity_kg);
-                const available = facility.capacity_kg - facility.current_level_kg;
-
-                return (
-                  <div key={facility.id} className="p-6 bg-white/40 rounded-xl border-2 border-white/60 hover:bg-white/60 transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-bold text-gray-800">{facility.name}</h3>
-                          <Badge className={getStatusColor(facility.status)}>
-                            {facility.status}
-                          </Badge>
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                            {facility.storage_type.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {facility.location}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Last Inspection: {formatDate(facility.last_inspection_date || facility.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          className="border border-white/10"
-                          onClick={() => {
-                            setSelectedFacility(facility);
-                            setShowTransactionModal(true);
-                          }}
-                        >
-                          <ArrowUp className="w-4 h-4 mr-1" />
-                          Add/Remove
-                        </Button>
-                        <Button variant="ghost" className="border border-white/10">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" className="border border-white/10" onClick={() => handleDeleteFacility(facility.id)}>
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Storage Level</span>
-                        <span className="text-sm font-bold text-purple-600">{formatNumber(utilization, 1)}%</span>
-                      </div>
-                      <Progress value={utilization} className="h-3" />
-                      <div className="flex justify-between mt-1 text-xs text-gray-600">
-                        <span>{formatNumber(facility.current_level_kg, 0)} kg stored</span>
-                        <span>{formatNumber(available, 0)} kg available</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <p className="text-xs text-purple-600 font-medium mb-1">Total Capacity</p>
-                        <p className="text-lg font-bold text-purple-800">{formatNumber(facility.capacity_kg, 0)} kg</p>
-                      </div>
-                      {facility.pressure_bar && (
-                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs text-blue-600 font-medium mb-1">Pressure</p>
-                          <p className="text-lg font-bold text-blue-800">{facility.pressure_bar} bar</p>
-                        </div>
-                      )}
-                      {facility.temperature_celsius && (
-                        <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                          <p className="text-xs text-orange-600 font-medium mb-1">Temperature</p>
-                          <p className="text-lg font-bold text-orange-800">{facility.temperature_celsius}°C</p>
-                        </div>
-                      )}
-                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                        <p className="text-xs text-green-600 font-medium mb-1">Utilization</p>
-                        <p className="text-lg font-bold text-green-800">{formatNumber(utilization, 1)}%</p>
-                      </div>
-                    </div>
-
-                    {utilization > 90 && (
-                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                        <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-yellow-900">High Utilization Warning</p>
-                          <p className="text-xs text-yellow-700">Storage facility is at {formatNumber(utilization, 1)}% capacity. Consider offloading soon.</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {utilization < 20 && (
-                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-blue-900">Low Utilization</p>
-                          <p className="text-xs text-blue-700">Storage facility has {formatNumber(available, 0)} kg available capacity.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Storage Technology Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glassmorphic-strong border-2 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-blue-800">Compressed Gas</CardTitle>
-            <CardDescription>High pressure storage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Pressure:</span>
-                <span className="font-semibold text-blue-800">200-700 bar</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Energy Density:</span>
-                <span className="font-semibold text-blue-800">0.5-1.3 kWh/L</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Compression:</span>
-                <span className="font-semibold text-blue-800">2.2-3.4 kWh/kg</span>
-              </div>
-              <Badge className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200 mt-3">Most Common</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-purple-200">
-          <CardHeader>
-            <CardTitle className="text-purple-800">Liquid H₂</CardTitle>
-            <CardDescription>Cryogenic storage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Temperature:</span>
-                <span className="font-semibold text-purple-800">-253°C</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Energy Density:</span>
-                <span className="font-semibold text-purple-800">2.4 kWh/L</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Liquefaction:</span>
-                <span className="font-semibold text-purple-800">10-12 kWh/kg</span>
-              </div>
-              <Badge className="w-full justify-center bg-purple-100 text-purple-800 border-purple-200 mt-3">High Density</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-green-200">
-          <CardHeader>
-            <CardTitle className="text-green-800">Metal Hydride</CardTitle>
-            <CardDescription>Solid state storage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Pressure:</span>
-                <span className="font-semibold text-green-800">1-30 bar</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Capacity:</span>
-                <span className="font-semibold text-green-800">1-7 wt%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Temperature:</span>
-                <span className="font-semibold text-green-800">-40 to 120°C</span>
-              </div>
-              <Badge className="w-full justify-center bg-green-100 text-green-800 border-green-200 mt-3">Safe & Stable</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glassmorphic-strong border-2 border-cyan-200">
-          <CardHeader>
-            <CardTitle className="text-cyan-800">Underground</CardTitle>
-            <CardDescription>Salt cavern storage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Depth:</span>
-                <span className="font-semibold text-cyan-800">500-2000 m</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Capacity:</span>
-                <span className="font-semibold text-cyan-800">100-1000 tons</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Pressure:</span>
-                <span className="font-semibold text-cyan-800">50-200 bar</span>
-              </div>
-              <Badge className="w-full justify-center bg-cyan-100 text-cyan-800 border-cyan-200 mt-3">Large Scale</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Add Facility Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl glassmorphic-strong border-2 border-white/40">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-6 h-6 text-purple-600" />
-                Add Storage Facility
-              </CardTitle>
-              <CardDescription>Create a new hydrogen storage facility</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Facility Name</label>
-                  <Input
-                    placeholder="e.g., Compressed Storage Alpha"
-                    value={newFacility.name}
-                    onChange={(e) => setNewFacility({ ...newFacility, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Location</label>
-                  <Input
-                    placeholder="e.g., Texas, USA"
-                    value={newFacility.location}
-                    onChange={(e) => setNewFacility({ ...newFacility, location: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Storage Type</label>
-                    <select
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                      value={newFacility.storage_type}
-                      onChange={(e) => setNewFacility({ ...newFacility, storage_type: e.target.value as 'compressed' | 'liquid' | 'metal_hydride' | 'underground' })}
-                    >
-                      <option value="compressed">Compressed Gas</option>
-                      <option value="liquid">Liquid Hydrogen</option>
-                      <option value="metal_hydride">Metal Hydride</option>
-                      <option value="underground">Underground Cavern</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Capacity (kg)</label>
-                    <Input
-                      type="number"
-                      placeholder="5000"
-                      value={newFacility.capacity_kg || ''}
-                      onChange={(e) => setNewFacility({ ...newFacility, capacity_kg: parseFloat(e.target.value) })}
-                    />
-                  </div>
-                </div>
-                {newFacility.storage_type === 'compressed' && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Pressure (bar)</label>
-                    <Input
-                      type="number"
-                      placeholder="350"
-                      value={newFacility.pressure_bar || ''}
-                      onChange={(e) => setNewFacility({ ...newFacility, pressure_bar: parseFloat(e.target.value) })}
-                    />
-                  </div>
-                )}
-                {newFacility.storage_type === 'liquid' && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Temperature (°C)</label>
-                    <Input
-                      type="number"
-                      placeholder="-253"
-                      value={newFacility.temperature_celsius || ''}
-                      onChange={(e) => setNewFacility({ ...newFacility, temperature_celsius: parseFloat(e.target.value) })}
-                    />
-                  </div>
-                )}
-                {newFacility.capacity_kg > 0 && (
-                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <h4 className="font-semibold text-purple-900 mb-2">Storage Information:</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-purple-600">Type: </span>
-                        <span className="font-semibold text-purple-800">{newFacility.storage_type.replace('_', ' ')}</span>
-                      </div>
-                      {newFacility.storage_type === 'compressed' && newFacility.capacity_kg > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-purple-600">Compression Energy: </span>
-                          <span className="font-semibold text-purple-800">{formatNumber(calculateCompressionEnergy(newFacility.capacity_kg, newFacility.pressure_bar), 0)} kWh</span>
-                        </div>
-                      )}
-                      {newFacility.storage_type === 'liquid' && newFacility.capacity_kg > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-purple-600">Liquefaction Energy: </span>
-                          <span className="font-semibold text-purple-800">{formatNumber(calculateLiquefactionEnergy(newFacility.capacity_kg), 0)} kWh</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-                <div className="flex gap-3 mt-6">
-                <Button onClick={() => setShowAddModal(false)} variant="ghost" className="flex-1 border border-white/10">
-                  Cancel
-                </Button>
-                <Button onClick={handleAddFacility} className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white" disabled={!newFacility.name || !newFacility.location || newFacility.capacity_kg <= 0}>
-                  Add Facility
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex gap-3">
+          <Button 
+            color="secondary" 
+            variant="flat"
+            onPress={onTransferOpen}
+            startContent={<Truck className="w-4 h-4" />}
+          >
+            Transfer H₂
+          </Button>
+          <Button 
+            color="primary" 
+            onPress={onAddOpen}
+            startContent={<Plus className="w-4 h-4" />}
+          >
+            Add Storage
+          </Button>
         </div>
-      )}
+      </motion.div>
 
-      {/* Add Transaction Modal */}
-      {showTransactionModal && selectedFacility && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg glassmorphic-strong border-2 border-white/40">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-6 h-6 text-blue-600" />
-                Storage Transaction
-              </CardTitle>
-              <CardDescription>{selectedFacility.name}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-blue-600 mb-1">Current Level</p>
-                    <p className="text-xl font-bold text-blue-800">{formatNumber(selectedFacility.current_level_kg, 0)} kg</p>
-                  </div>
-                  <div>
-                    <p className="text-blue-600 mb-1">Available Capacity</p>
-                    <p className="text-xl font-bold text-blue-800">{formatNumber(selectedFacility.capacity_kg - selectedFacility.current_level_kg, 0)} kg</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Transaction Type</label>
-                  <select
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    value={transaction.transaction_type}
-                    onChange={(e) => setTransaction({ ...transaction, transaction_type: e.target.value as 'input' | 'output' })}
-                  >
-                    <option value="input">Input (Add H₂)</option>
-                    <option value="output">Output (Remove H₂)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity (kg)</label>
-                  <Input
-                    type="number"
-                    placeholder="100"
-                    value={transaction.quantity_kg || ''}
-                    onChange={(e) => setTransaction({ ...transaction, quantity_kg: parseFloat(e.target.value) })}
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    Max {transaction.transaction_type === 'input'
-                      ? formatNumber(selectedFacility.capacity_kg - selectedFacility.current_level_kg, 0)
-                      : formatNumber(selectedFacility.current_level_kg, 0)} kg
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <motion.div 
+          className="space-y-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {alerts.map((alert) => (
+            <Card key={alert.id} className={`p-4 ${
+              alert.type === 'error' ? 'bg-red-50 border-red-200' : 
+              alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' : 
+              'bg-blue-50 border-blue-200'
+            }`}>
+              <CardBody className="p-0">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className={`w-5 h-5 ${
+                    alert.type === 'error' ? 'text-red-600' : 
+                    alert.type === 'warning' ? 'text-yellow-600' : 
+                    'text-blue-600'
+                  }`} />
+                  <p className={`text-sm font-medium ${
+                    alert.type === 'error' ? 'text-red-800' : 
+                    alert.type === 'warning' ? 'text-yellow-800' : 
+                    'text-blue-800'
+                  }`}>
+                    {alert.message}
                   </p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Notes (Optional)</label>
-                  <Input
-                    placeholder="e.g., Daily production batch"
-                    value={transaction.notes}
-                    onChange={(e) => setTransaction({ ...transaction, notes: e.target.value })}
-                  />
-                </div>
-
-                {transaction.quantity_kg > 0 && (
-                  <div className={`p-4 rounded-lg border ${transaction.transaction_type === 'input'
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-red-50 border-red-200'
-                    }`}>
-                    <p className="text-sm font-medium mb-2">
-                      {transaction.transaction_type === 'input' ? 'After Adding:' : 'After Removing:'}
-                    </p>
-                    <div className="flex justify-between text-sm">
-                      <span>New Level:</span>
-                      <span className="font-bold">
-                        {formatNumber(
-                          transaction.transaction_type === 'input'
-                            ? selectedFacility.current_level_kg + transaction.quantity_kg
-                            : selectedFacility.current_level_kg - transaction.quantity_kg,
-                          0
-                        )} kg
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Utilization:</span>
-                      <span className="font-bold">
-                        {formatNumber(
-                          calculateStorageUtilization(
-                            transaction.transaction_type === 'input'
-                              ? selectedFacility.current_level_kg + transaction.quantity_kg
-                              : selectedFacility.current_level_kg - transaction.quantity_kg,
-                            selectedFacility.capacity_kg
-                          ),
-                          1
-                        )}%
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <Button onClick={() => {
-                  setShowTransactionModal(false);
-                  setTransaction({ transaction_type: 'input', quantity_kg: 0, notes: '' });
-                }} variant="ghost" className="flex-1 border border-white/10">
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAddTransaction}
-                  className={`flex-1 ${transaction.transaction_type === 'input'
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600'
-                      : 'bg-gradient-to-r from-red-600 to-orange-600'
-                    } text-white`}
-                  disabled={transaction.quantity_kg <= 0}
-                >
-                  {transaction.transaction_type === 'input' ? (
-                    <>
-                      <ArrowUp className="w-4 h-4 mr-2" />
-                      Add to Storage
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown className="w-4 h-4 mr-2" />
-                      Remove from Storage
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardBody>
+            </Card>
+          ))}
+        </motion.div>
       )}
 
-      {/* Recent Transactions */}
-      {storageRecords.length > 0 && (
-        <Card className="glassmorphic-strong border-2 border-white/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-600" />
-              Recent Transactions
-            </CardTitle>
-            <CardDescription>Latest storage input/output activities</CardDescription>
+      {/* Storage Facilities Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <Card className="p-6">
+          <CardHeader className="p-0 pb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Database className="w-5 h-5 text-purple-600" />
+              Storage Facilities
+            </h3>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {storageRecords.slice(0, 10).map((record) => {
-                const facility = facilities.find(f => f.id === record.storage_id);
-                return (
-                  <div key={record.id} className="flex items-center justify-between p-3 bg-white/40 rounded-lg hover:bg-white/60 transition-all">
-                    <div className="flex items-center gap-3">
-                      {record.transaction_type === 'input' ? (
-                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                          <ArrowUp className="w-5 h-5 text-green-600" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                          <ArrowDown className="w-5 h-5 text-red-600" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          {record.transaction_type === 'input' ? 'Added' : 'Removed'} {formatNumber(record.quantity_kg, 0)} kg
-                        </p>
-                        <p className="text-sm text-gray-600">{facility?.name || 'Unknown Facility'}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-700">{formatDateTime(record.record_date)}</p>
-                      {record.notes && (
-                        <p className="text-xs text-gray-600">{record.notes}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
+          <CardBody className="p-0">
+            {facilities.length === 0 ? (
+              <div className="text-center py-12">
+                <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No storage facilities found. Add your first facility to get started.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {facilities.map((facility, index) => {
+                  const utilization = (facility.current_level_kg / facility.capacity_kg) * 100;
+                  return (
+                    <motion.div
+                      key={facility.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                    >
+                      <Card className="p-4 hover:shadow-lg transition-shadow">
+                        <CardBody className="p-0">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-gray-900">{facility.name}</h4>
+                            <Chip size="sm" color={getStorageColor(utilization)}>
+                              {Math.round(utilization)}%
+                            </Chip>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>Storage Level</span>
+                                <span>{facility.current_level_kg.toLocaleString()} / {facility.capacity_kg.toLocaleString()} kg</span>
+                              </div>
+                              <Progress 
+                                value={utilization} 
+                                color={getStorageColor(utilization)} 
+                                size="sm" 
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                              <span>📍 {facility.location}</span>
+                              <span>🏷️ {facility.storage_type}</span>
+                              <span>🔧 {facility.pressure_bar} bar</span>
+                              <span>🌡️ {facility.temperature_celsius}°C</span>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </CardBody>
         </Card>
-      )}
+      </motion.div>
+
+      {/* Add Storage Modal */}
+      <Modal isOpen={isAddOpen} onClose={onAddClose} size="2xl">
+        <ModalContent>
+          <ModalHeader>Add New Storage Facility</ModalHeader>
+          <ModalBody>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Facility Name"
+                placeholder="e.g., Mumbai Storage Hub"
+                value={newFacility.name}
+                onChange={(e) => setNewFacility({ ...newFacility, name: e.target.value })}
+              />
+              <Input
+                label="Location"
+                placeholder="e.g., Mumbai, India"
+                value={newFacility.location}
+                onChange={(e) => setNewFacility({ ...newFacility, location: e.target.value })}
+              />
+              <Select
+                label="Storage Type"
+                selectedKeys={[newFacility.storage_type]}
+                onSelectionChange={(keys) => setNewFacility({ ...newFacility, storage_type: Array.from(keys)[0] as string })}
+              >
+                <SelectItem key="compressed">Compressed Gas</SelectItem>
+                <SelectItem key="liquid">Liquid H₂</SelectItem>
+                <SelectItem key="metal_hydride">Metal Hydride</SelectItem>
+                <SelectItem key="underground">Underground</SelectItem>
+              </Select>
+              <Input
+                label="Capacity (kg)"
+                type="number"
+                placeholder="e.g., 10000"
+                value={newFacility.capacity_kg}
+                onChange={(e) => setNewFacility({ ...newFacility, capacity_kg: e.target.value })}
+              />
+              <Input
+                label="Pressure (bar)"
+                type="number"
+                placeholder="e.g., 350"
+                value={newFacility.pressure_bar}
+                onChange={(e) => setNewFacility({ ...newFacility, pressure_bar: e.target.value })}
+              />
+              <Input
+                label="Temperature (°C)"
+                type="number"
+                placeholder="e.g., 20"
+                value={newFacility.temperature_celsius}
+                onChange={(e) => setNewFacility({ ...newFacility, temperature_celsius: e.target.value })}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onAddClose}>
+              Cancel
+            </Button>
+            <Button color="primary" onPress={handleAddFacility}>
+              Add Storage Facility
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Transfer H₂ Modal */}
+      <Modal isOpen={isTransferOpen} onClose={onTransferClose} size="3xl">
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-2">
+            <Truck className="w-5 h-5" />
+            Transfer Hydrogen with Route Selection
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  label="From Production Facility"
+                  selectedKeys={transferData.fromFacilityId ? [transferData.fromFacilityId] : []}
+                  onSelectionChange={(keys) => setTransferData({...transferData, fromFacilityId: Array.from(keys)[0] as string})}
+                  placeholder="Select production facility"
+                >
+                  {productionFacilities.map((facility) => {
+                    // Simulate current production level (0-100% of daily capacity)
+                    const currentProduction = Math.floor(Math.random() * (facility.capacity_kg_per_day || 0));
+                    const productionPercent = ((currentProduction / (facility.capacity_kg_per_day || 1)) * 100).toFixed(1);
+                    
+                    return (
+                      <SelectItem key={facility.id}>
+                        {facility.name} - {currentProduction} kg available ({productionPercent}% of daily capacity)
+                      </SelectItem>
+                    );
+                  })}
+                </Select>
+                
+                <Select
+                  label="To Storage Facility"
+                  selectedKeys={transferData.toStorageId ? [transferData.toStorageId] : []}
+                  onSelectionChange={(keys) => setTransferData({...transferData, toStorageId: Array.from(keys)[0] as string})}
+                  placeholder="Select storage facility"
+                >
+                  {facilities.map((facility) => {
+                    const available = facility.capacity_kg - facility.current_level_kg;
+                    const utilization = ((facility.current_level_kg / facility.capacity_kg) * 100).toFixed(1);
+                    return (
+                      <SelectItem key={facility.id}>
+                        {facility.name} - {available.toLocaleString()} kg available ({utilization}% full)
+                      </SelectItem>
+                    );
+                  })}
+                </Select>
+                
+                <Input
+                  label="Amount (kg)"
+                  type="number"
+                  placeholder="e.g., 1000"
+                  value={transferData.amount}
+                  onChange={(e) => setTransferData({...transferData, amount: e.target.value})}
+                />
+                
+                <Select
+                  label="Priority"
+                  selectedKeys={[transferData.priority]}
+                  onSelectionChange={(keys) => setTransferData({...transferData, priority: Array.from(keys)[0] as string})}
+                >
+                  <SelectItem key="low">Low</SelectItem>
+                  <SelectItem key="medium">Medium</SelectItem>
+                  <SelectItem key="high">High (Override Capacity)</SelectItem>
+                  <SelectItem key="urgent">Urgent (Override Capacity)</SelectItem>
+                </Select>
+              </div>
+
+              {/* Production Status Display */}
+              {transferData.fromFacilityId && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2">📊 Production Status</h4>
+                  {(() => {
+                    const selectedFacility = productionFacilities.find(f => f.id === transferData.fromFacilityId);
+                    if (!selectedFacility) return null;
+                    
+                    const currentProduction = Math.floor(Math.random() * (selectedFacility.capacity_kg_per_day || 0));
+                    const productionPercent = ((currentProduction / (selectedFacility.capacity_kg_per_day || 1)) * 100);
+                    
+                    return (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Facility:</span>
+                          <p className="font-medium text-blue-900">{selectedFacility.name}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Available H₂:</span>
+                          <p className="font-medium text-green-600">{currentProduction} kg</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Daily Progress:</span>
+                          <p className="font-medium text-blue-600">{productionPercent.toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Status:</span>
+                          <p className={`font-medium ${
+                            productionPercent >= 90 ? 'text-red-600' : 
+                            productionPercent >= 70 ? 'text-orange-600' : 
+                            'text-green-600'
+                          }`}>
+                            {productionPercent >= 90 ? 'Urgent Transfer Needed' : 
+                             productionPercent >= 70 ? 'Plan Transfer Soon' : 
+                             'Normal Operation'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Route Selection */}
+              {transferData.fromFacilityId && transferData.toStorageId && transferData.amount && (
+                <div>
+                  <h4 className="font-semibold mb-3">Select Transport Route:</h4>
+                  <div className="space-y-3">
+                    {getAvailableRoutes('', '', parseFloat(transferData.amount) || 0).map((route) => {
+                      const availableCapacity = route.capacity_kg - route.current_load_kg;
+                      const requiredAmount = parseFloat(transferData.amount) || 0;
+                      const canOverride = transferData.priority === 'high' || transferData.priority === 'urgent';
+                      const isCapacityExceeded = requiredAmount > availableCapacity;
+                      
+                      return (
+                        <Card 
+                          key={route.id} 
+                          className={`p-4 cursor-pointer transition-all ${
+                            transferData.selectedRouteId === route.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                          } ${isCapacityExceeded && !canOverride ? 'opacity-50' : ''}`}
+                          isPressable
+                          onPress={() => setTransferData({...transferData, selectedRouteId: route.id})}
+                        >
+                          <CardBody className="p-0">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <h5 className="font-medium">{route.route_name || `Route ${route.id.slice(0, 8)}`}</h5>
+                                <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                                  <span>🚛 {route.transport_type.replace('_', ' ')}</span>
+                                  <span>📏 {route.distance_km} km</span>
+                                  <span>⚡ {route.energy_cost_kwh} kWh</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm">
+                                  <span className={`font-medium ${isCapacityExceeded && !canOverride ? 'text-red-600' : 'text-green-600'}`}>
+                                    {availableCapacity.toLocaleString()} kg available
+                                  </span>
+                                </div>
+                                {isCapacityExceeded && canOverride && (
+                                  <Chip size="sm" color="warning" className="mt-1">
+                                    Priority Override
+                                  </Chip>
+                                )}
+                                {isCapacityExceeded && !canOverride && (
+                                  <Chip size="sm" color="danger" className="mt-1">
+                                    Capacity Exceeded
+                                  </Chip>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Vehicle Load Progress Bar */}
+                            <div>
+                              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                <span>Current Load</span>
+                                <span>{route.current_load_kg} / {route.capacity_kg} kg</span>
+                              </div>
+                              <Progress 
+                                value={((route.current_load_kg || 0) / route.capacity_kg) * 100} 
+                                color={
+                                  ((route.current_load_kg || 0) / route.capacity_kg) >= 0.9 ? 'danger' :
+                                  ((route.current_load_kg || 0) / route.capacity_kg) >= 0.7 ? 'warning' :
+                                  'primary'
+                                }
+                                size="sm" 
+                              />
+                              <div className="text-xs text-gray-500 mt-1">
+                                Fill Level: {(((route.current_load_kg || 0) / route.capacity_kg) * 100).toFixed(1)}%
+                              </div>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  
+                  {getAvailableRoutes('', '', parseFloat(transferData.amount) || 0).length === 0 && (
+                    <div className="text-center py-6 text-gray-500">
+                      <Truck className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p>No available routes found for this transfer.</p>
+                      <p className="text-sm">Try reducing the amount or using High/Urgent priority.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <Input
+                label="Notes (Optional)"
+                placeholder="Additional transfer notes..."
+                value={transferData.notes}
+                onChange={(e) => setTransferData({...transferData, notes: e.target.value})}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onTransferClose}>
+              Cancel
+            </Button>
+            <Button 
+              color="primary" 
+              onPress={handleTransfer}
+              isDisabled={!transferData.fromFacilityId || !transferData.toStorageId || !transferData.amount || !transferData.selectedRouteId}
+            >
+              Initiate Transfer
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
