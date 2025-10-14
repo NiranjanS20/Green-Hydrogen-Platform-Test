@@ -406,6 +406,27 @@ export default function ProductionPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8 max-w-md mx-auto">
+          <CardBody className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access production management features.</p>
+            <Button 
+              as="a" 
+              href="/login" 
+              color="primary"
+              className="w-full"
+            >
+              Sign In
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

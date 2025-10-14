@@ -1,0 +1,141 @@
+table_name,column_name,data_type,is_nullable,column_default
+deliveries,id,uuid,NO,gen_random_uuid()
+deliveries,user_id,uuid,NO,null
+deliveries,route_id,uuid,NO,null
+deliveries,source_facility_id,uuid,NO,null
+deliveries,destination_storage_id,uuid,NO,null
+deliveries,vehicle_id,text,NO,null
+deliveries,h2_amount_kg,numeric,NO,null
+deliveries,status,text,YES,'assigned'::text
+deliveries,eta,timestamp with time zone,YES,null
+deliveries,started_at,timestamp with time zone,YES,null
+deliveries,completed_at,timestamp with time zone,YES,null
+deliveries,created_at,timestamp with time zone,YES,now()
+deliveries,updated_at,timestamp with time zone,YES,now()
+production_facilities,id,uuid,NO,gen_random_uuid()
+production_facilities,user_id,uuid,NO,null
+production_facilities,name,text,NO,null
+production_facilities,location,text,NO,null
+production_facilities,electrolyzer_type,text,NO,null
+production_facilities,capacity_kg_per_day,numeric,NO,null
+production_facilities,energy_source_id,uuid,YES,null
+production_facilities,efficiency_percent,numeric,YES,70
+production_facilities,status,text,YES,'operational'::text
+production_facilities,commissioned_date,date,YES,null
+production_facilities,created_at,timestamp with time zone,YES,now()
+production_facilities,updated_at,timestamp with time zone,YES,now()
+production_facilities,available_h2_kg,numeric,YES,0
+production_records,id,uuid,NO,gen_random_uuid()
+production_records,facility_id,uuid,NO,null
+production_records,production_date,date,NO,null
+production_records,hydrogen_produced_kg,numeric,NO,null
+production_records,energy_consumed_kwh,numeric,NO,null
+production_records,water_consumed_liters,numeric,YES,null
+production_records,efficiency_percent,numeric,YES,null
+production_records,carbon_offset_kg,numeric,YES,null
+production_records,operating_hours,numeric,YES,null
+production_records,notes,text,YES,null
+production_records,created_at,timestamp with time zone,YES,now()
+profiles,id,uuid,NO,null
+profiles,email,text,NO,null
+profiles,full_name,text,YES,null
+profiles,organization,text,YES,null
+profiles,role,text,YES,'operator'::text
+profiles,avatar_url,text,YES,null
+profiles,created_at,timestamp with time zone,YES,now()
+profiles,updated_at,timestamp with time zone,YES,now()
+profiles,admin_status,text,YES,null
+renewable_sources,id,uuid,NO,gen_random_uuid()
+renewable_sources,user_id,uuid,NO,null
+renewable_sources,name,text,NO,null
+renewable_sources,location,text,NO,null
+renewable_sources,source_type,text,NO,null
+renewable_sources,capacity_mw,numeric,NO,null
+renewable_sources,capacity_factor,numeric,YES,0.25
+renewable_sources,current_output_mw,numeric,YES,0
+renewable_sources,uptime_percent,numeric,YES,100
+renewable_sources,energy_produced_kwh,numeric,YES,0
+renewable_sources,status,text,YES,'operational'::text
+renewable_sources,weather_dependent,boolean,YES,true
+renewable_sources,installation_date,date,YES,null
+renewable_sources,created_at,timestamp with time zone,YES,now()
+renewable_sources,updated_at,timestamp with time zone,YES,now()
+research_papers,id,uuid,NO,gen_random_uuid()
+research_papers,title,text,NO,null
+research_papers,authors,ARRAY,NO,null
+research_papers,publication_year,integer,YES,null
+research_papers,journal,text,YES,null
+research_papers,doi,text,YES,null
+research_papers,abstract,text,YES,null
+research_papers,keywords,ARRAY,YES,null
+research_papers,category,text,NO,null
+research_papers,pdf_url,text,YES,null
+research_papers,relevance_score,numeric,YES,null
+research_papers,citation_count,integer,YES,0
+research_papers,created_at,timestamp with time zone,YES,now()
+research_papers,updated_at,timestamp with time zone,YES,now()
+storage_facilities,id,uuid,NO,gen_random_uuid()
+storage_facilities,user_id,uuid,NO,null
+storage_facilities,name,text,NO,null
+storage_facilities,location,text,NO,null
+storage_facilities,storage_type,text,NO,null
+storage_facilities,capacity_kg,numeric,NO,null
+storage_facilities,current_level_kg,numeric,YES,0
+storage_facilities,pressure_bar,numeric,YES,null
+storage_facilities,temperature_celsius,numeric,YES,null
+storage_facilities,status,text,YES,'operational'::text
+storage_facilities,last_inspection_date,date,YES,null
+storage_facilities,created_at,timestamp with time zone,YES,now()
+storage_facilities,updated_at,timestamp with time zone,YES,now()
+storage_facilities,current_h2_kg,numeric,YES,0
+storage_facilities,remaining_capacity_kg,numeric,YES,null
+storage_records,id,uuid,NO,gen_random_uuid()
+storage_records,storage_id,uuid,NO,null
+storage_records,record_date,timestamp with time zone,YES,now()
+storage_records,transaction_type,text,NO,null
+storage_records,quantity_kg,numeric,NO,null
+storage_records,pressure_bar,numeric,YES,null
+storage_records,temperature_celsius,numeric,YES,null
+storage_records,energy_used_kwh,numeric,YES,null
+storage_records,notes,text,YES,null
+storage_records,created_at,timestamp with time zone,YES,now()
+system_metrics,id,uuid,NO,gen_random_uuid()
+system_metrics,user_id,uuid,YES,null
+system_metrics,metric_date,date,NO,null
+system_metrics,total_production_kg,numeric,YES,null
+system_metrics,total_energy_consumed_kwh,numeric,YES,null
+system_metrics,total_carbon_offset_kg,numeric,YES,null
+system_metrics,average_efficiency_percent,numeric,YES,null
+system_metrics,storage_utilization_percent,numeric,YES,null
+system_metrics,active_facilities_count,integer,YES,null
+system_metrics,renewable_energy_percent,numeric,YES,null
+system_metrics,created_at,timestamp with time zone,YES,now()
+transport_routes,id,uuid,NO,gen_random_uuid()
+transport_routes,user_id,uuid,NO,null
+transport_routes,route_name,text,NO,null
+transport_routes,origin,text,NO,null
+transport_routes,destination,text,NO,null
+transport_routes,transport_type,text,NO,null
+transport_routes,vehicle_id,text,YES,null
+transport_routes,distance_km,numeric,NO,null
+transport_routes,capacity_kg,numeric,NO,null
+transport_routes,current_load_kg,numeric,YES,0
+transport_routes,status,text,YES,'scheduled'::text
+transport_routes,estimated_arrival,timestamp with time zone,YES,null
+transport_routes,cost_per_kg_km,numeric,YES,null
+transport_routes,energy_cost_kwh,numeric,YES,null
+transport_routes,pressure_loss_bar,numeric,YES,null
+transport_routes,created_at,timestamp with time zone,YES,now()
+transport_routes,updated_at,timestamp with time zone,YES,now()
+transport_routes,destination_storage_id,uuid,YES,null
+transport_routes,pending_delivery_kg,numeric,YES,0
+transport_routes,progress_percent,numeric,YES,0
+vehicle_status,id,uuid,NO,gen_random_uuid()
+vehicle_status,user_id,uuid,NO,null
+vehicle_status,vehicle_id,text,NO,null
+vehicle_status,current_load_kg,numeric,YES,0
+vehicle_status,capacity_kg,numeric,NO,null
+vehicle_status,status,text,YES,'available'::text
+vehicle_status,location,text,YES,null
+vehicle_status,last_updated,timestamp with time zone,YES,now()
+vehicle_status,created_at,timestamp with time zone,YES,now()

@@ -1,18 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardBody, CardHeader } from '@heroui/react';
-import { Button } from '@heroui/react';
-import { Input } from '@heroui/react';
-import { Chip } from '@heroui/react';
-import { Progress } from '@heroui/react';
-import { Select, SelectItem } from '@heroui/react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react';
-import { Divider } from '@heroui/react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { Database, Plus, TrendingUp, Thermometer, Gauge, AlertTriangle, CheckCircle2, Edit, Trash2, MapPin, Calendar, ArrowUp, ArrowDown, Activity, Truck, Route, Zap } from 'lucide-react';
+import { Card, CardBody, CardHeader, Button, Input, Select, SelectItem, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Chip, Progress, Textarea } from '@heroui/react';
+import { Database, Plus, Truck, AlertTriangle, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase, getCurrentUser } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 type StorageFacility = {
   id: string;
@@ -26,6 +19,7 @@ type StorageFacility = {
   temperature_celsius: number;
   status: string;
   created_at: string;
+  remaining_capacity_kg: number;
 };
 
 type ProductionFacility = {
@@ -35,6 +29,7 @@ type ProductionFacility = {
   capacity_kg_per_day: number;
   current_production_kg: number;
   status: string;
+  available_h2_kg: number;
 };
 
 type TransportRoute = {
@@ -53,8 +48,13 @@ export default function StoragePage() {
   const [facilities, setFacilities] = useState<StorageFacility[]>([]);
   const [productionFacilities, setProductionFacilities] = useState<ProductionFacility[]>([]);
   const [transportRoutes, setTransportRoutes] = useState<TransportRoute[]>([]);
-  const [alerts, setAlerts] = useState<Array<{id: string; type: 'warning' | 'error' | 'info'; message: string}>>([]);
-  
+  const [alerts, setAlerts] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+    message: string;
+  }>>([]);
+  const [deliveryStatus, setDeliveryStatus] = useState<{[key: string]: 'assigned' | 'in_transit' | 'delivered'}>({});
+
   const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
   const { isOpen: isTransferOpen, onOpen: onTransferOpen, onClose: onTransferClose } = useDisclosure();
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
@@ -83,7 +83,7 @@ export default function StoragePage() {
 
   const loadData = async () => {
     try {
-      const { user: currentUser } = await getCurrentUser();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       setUser(currentUser);
 
       if (currentUser) {
@@ -209,6 +209,68 @@ export default function StoragePage() {
     });
   };
 
+  const startDelivery = async (routeId: string) => {
+    try {
+      const response = await fetch('/api/transportation/delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', routeId })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setDeliveryStatus(prev => ({ ...prev, [routeId]: 'in_transit' }));
+        setAlerts(prev => [...prev, {
+          id: `start-${Date.now()}`,
+          type: 'info',
+          message: '🚚 Delivery started - Vehicle is now in transit'
+        }]);
+        loadData();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error starting delivery:', error);
+      setAlerts(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to start delivery'
+      }]);
+    }
+  };
+
+  const completeDelivery = async (routeId: string) => {
+    try {
+      const response = await fetch('/api/transportation/delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete', routeId })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setDeliveryStatus(prev => ({ ...prev, [routeId]: 'delivered' }));
+        setAlerts(prev => [...prev, {
+          id: `complete-${Date.now()}`,
+          type: 'success',
+          message: '✅ Delivery completed - H₂ transferred to storage facility'
+        }]);
+        loadData();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error completing delivery:', error);
+      setAlerts(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to complete delivery'
+      }]);
+    }
+  };
+
   const handleTransfer = async () => {
     if (!user) return;
 
@@ -291,10 +353,32 @@ export default function StoragePage() {
     return 'success';
   };
 
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8 max-w-md mx-auto">
+          <CardBody className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access storage management features.</p>
+            <Button 
+              as={Link} 
+              href="/login" 
+              color="primary"
+              className="w-full"
+            >
+              Sign In
+            </Button>
+          </CardBody>
+        </Card>
       </div>
     );
   }
@@ -572,8 +656,9 @@ export default function StoragePage() {
                     const selectedFacility = productionFacilities.find(f => f.id === transferData.fromFacilityId);
                     if (!selectedFacility) return null;
                     
-                    const currentProduction = Math.floor(Math.random() * (selectedFacility.capacity_kg_per_day || 0));
-                    const productionPercent = ((currentProduction / (selectedFacility.capacity_kg_per_day || 1)) * 100);
+                    // Get actual available H2 from production records
+                    const availableH2 = selectedFacility.available_h2_kg || 0;
+                    const dailyCapacity = selectedFacility.capacity_kg_per_day || 1000;
                     
                     return (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -583,21 +668,21 @@ export default function StoragePage() {
                         </div>
                         <div>
                           <span className="text-gray-600">Available H₂:</span>
-                          <p className="font-medium text-green-600">{currentProduction} kg</p>
+                          <p className="font-medium text-green-600">{availableH2.toLocaleString()} kg</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">Daily Progress:</span>
-                          <p className="font-medium text-blue-600">{productionPercent.toFixed(1)}%</p>
+                          <span className="text-gray-600">Daily Capacity:</span>
+                          <p className="font-medium text-blue-600">{dailyCapacity.toLocaleString()} kg</p>
                         </div>
                         <div>
                           <span className="text-gray-600">Status:</span>
                           <p className={`font-medium ${
-                            productionPercent >= 90 ? 'text-red-600' : 
-                            productionPercent >= 70 ? 'text-orange-600' : 
+                            availableH2 >= dailyCapacity * 0.9 ? 'text-red-600' : 
+                            availableH2 >= dailyCapacity * 0.7 ? 'text-orange-600' : 
                             'text-green-600'
                           }`}>
-                            {productionPercent >= 90 ? 'Urgent Transfer Needed' : 
-                             productionPercent >= 70 ? 'Plan Transfer Soon' : 
+                            {availableH2 >= dailyCapacity * 0.9 ? 'Urgent Transfer Needed' : 
+                             availableH2 >= dailyCapacity * 0.7 ? 'Plan Transfer Soon' : 
                              'Normal Operation'}
                           </p>
                         </div>
@@ -607,6 +692,51 @@ export default function StoragePage() {
                 </div>
               )}
 
+              {/* Storage Capacity Display */}
+              {transferData.toStorageId && (
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-900 mb-2">📦 Storage Capacity</h4>
+                  {(() => {
+                    const selectedStorage = facilities.find(s => s.id === transferData.toStorageId);
+                    if (!selectedStorage) return null;
+                    
+                    const currentLevel = selectedStorage.current_level_kg || 0;
+                    const totalCapacity = selectedStorage.capacity_kg || 1;
+                    const remainingCapacity = totalCapacity - currentLevel;
+                    const utilizationPercent = (currentLevel / totalCapacity) * 100;
+                    
+                    return (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Storage:</span>
+                          <p className="font-medium text-green-900">{selectedStorage.name}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Free Capacity:</span>
+                          <p className="font-medium text-green-600">{remainingCapacity.toLocaleString()} kg</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Utilization:</span>
+                          <p className="font-medium text-blue-600">{utilizationPercent.toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Status:</span>
+                          <p className={`font-medium ${
+                            utilizationPercent >= 95 ? 'text-red-600' : 
+                            utilizationPercent >= 85 ? 'text-orange-600' : 
+                            'text-green-600'
+                          }`}>
+                            {utilizationPercent >= 95 ? 'Critical - Nearly Full' : 
+                             utilizationPercent >= 85 ? 'High Utilization' : 
+                             'Available'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              
               {/* Route Selection */}
               {transferData.fromFacilityId && transferData.toStorageId && transferData.amount && (
                 <div>
@@ -697,6 +827,28 @@ export default function StoragePage() {
                 value={transferData.notes}
                 onChange={(e) => setTransferData({...transferData, notes: e.target.value})}
               />
+              
+              {/* Start Delivery Button */}
+              {transferData.selectedRouteId && (
+                <Button
+                  color="primary"
+                  onPress={() => startDelivery(transferData.selectedRouteId)}
+                  className="mt-4 w-full"
+                >
+                  Start Delivery
+                </Button>
+              )}
+
+              {/* Complete Delivery Button */}
+              {transferData.selectedRouteId && (
+                <Button
+                  color="success"
+                  onPress={() => completeDelivery(transferData.selectedRouteId)}
+                  className="mt-4 w-full"
+                >
+                  Complete Delivery
+                </Button>
+              )}
             </div>
           </ModalBody>
           <ModalFooter>

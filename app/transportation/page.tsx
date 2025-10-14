@@ -10,7 +10,7 @@ import { Select, SelectItem } from '@heroui/react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react';
 import { Divider } from '@heroui/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
-import { Truck, MapPin, Plus, Trash2, Activity, Zap, Package, Route, Play, Pause, CheckCircle2, Clock, Navigation, TrendingUp, AlertTriangle, Timer, Fuel } from 'lucide-react';
+import { Truck, MapPin, Plus, Trash2, Activity, Zap, Package, Route, Play, Pause, CheckCircle2, Clock, Navigation, TrendingUp, AlertTriangle, Timer, Fuel, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 
@@ -23,7 +23,7 @@ type TransportRoute = {
   distance_km: number;
   capacity_kg: number;
   current_load_kg: number;
-  status: 'scheduled' | 'in_transit' | 'completed' | 'delayed';
+  status: 'scheduled' | 'in_transit' | 'completed' | 'delayed' | 'delivered';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   energy_cost_kwh: number | null;
   pressure_loss_bar: number | null;
@@ -31,6 +31,8 @@ type TransportRoute = {
   actual_arrival: string | null;
   progress_percent: number;
   fuel_efficiency: number | null;
+  destination_storage_id?: string | null;
+  pending_delivery_kg?: number;
   created_at: string;
   updated_at?: string;
 };
@@ -56,6 +58,7 @@ export default function TransportationPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
   const { isOpen: isDeliveryOpen, onOpen: onDeliveryOpen, onClose: onDeliveryClose } = useDisclosure();
   const [selectedRoute, setSelectedRoute] = useState<TransportRoute | null>(null);
@@ -79,9 +82,24 @@ export default function TransportationPage() {
   });
 
   useEffect(() => {
-    loadRoutes();
-    loadMetrics();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser);
+      
+      if (currentUser) {
+        await loadRoutes();
+        await loadMetrics();
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadRoutes = async () => {
     try {
@@ -472,6 +490,27 @@ export default function TransportationPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8 max-w-md mx-auto">
+          <CardBody className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access transportation management features.</p>
+            <Button 
+              as="a" 
+              href="/login" 
+              color="primary"
+              className="w-full"
+            >
+              Sign In
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -505,7 +544,7 @@ export default function TransportationPage() {
           <CardBody className="p-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Route className="w-5 h-5 text-blue-600" />
+                <Package className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{metrics.totalRoutes}</p>
@@ -716,10 +755,24 @@ export default function TransportationPage() {
                             {route.status === 'in_transit' && (
                               <div className="mt-3">
                                 <div className="flex justify-between text-sm mb-1">
-                                  <span>Progress</span>
-                                  <span>{route.progress_percent}%</span>
+                                  <span>Delivery Progress</span>
+                                  <span>{route.progress_percent || 0}%</span>
                                 </div>
-                                <Progress value={route.progress_percent} color="primary" size="sm" />
+                                <Progress value={route.progress_percent || 0} color="primary" size="sm" />
+                                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                  <span>🚚 In Transit</span>
+                                  <span>ETA: {route.estimated_arrival ? new Date(route.estimated_arrival).toLocaleTimeString() : 'Calculating...'}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Pending Delivery Indicator */}
+                            {route.pending_delivery_kg && route.pending_delivery_kg > 0 && (
+                              <div className="mt-3 p-2 bg-yellow-50 rounded border border-yellow-200">
+                                <div className="flex items-center gap-2 text-sm text-yellow-800">
+                                  <span>📦</span>
+                                  <span>Pending Delivery: {route.pending_delivery_kg} kg H₂</span>
+                                </div>
                               </div>
                             )}
                           </div>
