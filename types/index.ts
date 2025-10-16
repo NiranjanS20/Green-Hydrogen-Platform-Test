@@ -341,5 +341,337 @@ export interface DashboardCard {
   description?: string;
 }
 
+// Enhanced Enterprise Features Types
+
+// Notification System Types
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  read: boolean;
+  action_url?: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface NotificationSettings {
+  user_id: string;
+  email_enabled: boolean;
+  push_enabled: boolean;
+  sms_enabled?: boolean;
+  production_alerts: boolean;
+  storage_alerts: boolean;
+  transport_alerts: boolean;
+  system_alerts: boolean;
+  maintenance_alerts: boolean;
+  threshold_alerts: boolean;
+  daily_summary: boolean;
+  weekly_report: boolean;
+}
+
+// Data Import/Export Types
+export interface ExportOptions {
+  format: 'csv' | 'xlsx' | 'json' | 'pdf';
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  tables: DatabaseTables[];
+  includeMetadata: boolean;
+  compression?: boolean;
+}
+
+export interface ImportResult {
+  success: boolean;
+  recordsProcessed: number;
+  recordsImported: number;
+  errors: ImportError[];
+  warnings: string[];
+}
+
+export interface ImportError {
+  row: number;
+  field: string;
+  value: any;
+  message: string;
+}
+
+// Demo Mode Types
+export interface DemoConfig {
+  enabled: boolean;
+  duration_minutes: number;
+  reset_interval_hours: number;
+  sample_data_size: 'small' | 'medium' | 'large';
+  features_enabled: string[];
+  restrictions: string[];
+}
+
+export interface DemoSession {
+  id: string;
+  user_id: string;
+  started_at: string;
+  expires_at: string;
+  config: DemoConfig;
+  actions_taken: DemoAction[];
+}
+
+export interface DemoAction {
+  timestamp: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  data: Record<string, any>;
+}
+
+// Audit and Logging Types
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
+  ip_address?: string;
+  user_agent?: string;
+  timestamp: string;
+  session_id?: string;
+}
+
+export interface SystemLog {
+  id: string;
+  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+  message: string;
+  component: string;
+  function_name?: string;
+  error_stack?: string;
+  metadata?: Record<string, any>;
+  timestamp: string;
+}
+
+// Rate Limiting Types
+export interface RateLimit {
+  endpoint: string;
+  method: string;
+  limit: number;
+  window_seconds: number;
+  user_specific: boolean;
+}
+
+export interface RateLimitStatus {
+  remaining: number;
+  reset_time: string;
+  limit: number;
+}
+
+// KPI and Analytics Enhancement Types
+export interface KPI {
+  id: string;
+  name: string;
+  description: string;
+  formula: string;
+  unit: string;
+  target_value?: number;
+  current_value: number;
+  trend: 'up' | 'down' | 'stable';
+  category: 'production' | 'efficiency' | 'cost' | 'environmental' | 'safety';
+  updated_at: string;
+}
+
+export interface Benchmark {
+  id: string;
+  name: string;
+  category: string;
+  industry_average: number;
+  best_in_class: number;
+  our_performance: number;
+  unit: string;
+  source: string;
+  last_updated: string;
+}
+
+// Supply Chain Simulation Types
+export interface SimulationScenario {
+  id: string;
+  name: string;
+  description: string;
+  type: 'optimistic' | 'base' | 'pessimistic' | 'custom';
+  parameters: SimulationParameters;
+  results?: SimulationResults;
+  created_at: string;
+}
+
+export interface SimulationParameters {
+  duration_days: number;
+  production_multiplier: number;
+  energy_cost_multiplier: number;
+  demand_multiplier: number;
+  weather_impact: boolean;
+  maintenance_schedule: boolean;
+  market_volatility: number;
+}
+
+export interface SimulationResults {
+  total_production_kg: number;
+  total_cost_usd: number;
+  average_efficiency: number;
+  carbon_offset_kg: number;
+  revenue_usd: number;
+  profit_margin: number;
+  roi_percent: number;
+  daily_breakdown: DailySimulationResult[];
+}
+
+export interface DailySimulationResult {
+  date: string;
+  production_kg: number;
+  energy_consumed_kwh: number;
+  cost_usd: number;
+  efficiency_percent: number;
+  weather_factor: number;
+}
+
+// Research Paper Enhancement Types
+export interface ResearchPaperMetadata {
+  id: string;
+  paper_id: string;
+  file_size_bytes: number;
+  page_count: number;
+  language: string;
+  extracted_text?: string;
+  citations_count: number;
+  references: string[];
+  figures_count: number;
+  tables_count: number;
+  processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+export interface ExternalDataset {
+  id: string;
+  name: string;
+  description: string;
+  source_url: string;
+  api_endpoint?: string;
+  data_format: 'json' | 'csv' | 'xml' | 'api';
+  update_frequency: 'real-time' | 'hourly' | 'daily' | 'weekly' | 'monthly';
+  last_sync: string;
+  status: 'active' | 'inactive' | 'error';
+}
+
+// Contributor and Version Management Types
+export interface Contributor {
+  id: string;
+  name: string;
+  email: string;
+  role: 'developer' | 'designer' | 'analyst' | 'tester' | 'manager';
+  avatar_url?: string;
+  github_username?: string;
+  linkedin_url?: string;
+  contributions: Contribution[];
+  joined_at: string;
+}
+
+export interface Contribution {
+  type: 'feature' | 'bugfix' | 'documentation' | 'design' | 'analysis';
+  description: string;
+  date: string;
+  commit_hash?: string;
+  pull_request_url?: string;
+}
+
+export interface Version {
+  version: string;
+  release_date: string;
+  type: 'major' | 'minor' | 'patch' | 'hotfix';
+  changelog: ChangelogEntry[];
+  breaking_changes: string[];
+  migration_notes?: string;
+  download_url?: string;
+}
+
+export interface ChangelogEntry {
+  type: 'added' | 'changed' | 'deprecated' | 'removed' | 'fixed' | 'security';
+  description: string;
+  issue_number?: string;
+  author: string;
+}
+
+// Error Boundary Types
+export interface ErrorInfo {
+  componentStack: string;
+  errorBoundary?: string;
+}
+
+export interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
+  eventId?: string;
+}
+
+// Performance Monitoring Types
+export interface PerformanceMetric {
+  id: string;
+  metric_name: string;
+  value: number;
+  unit: string;
+  timestamp: string;
+  component?: string;
+  user_id?: string;
+  session_id?: string;
+}
+
+export interface LoadingState {
+  isLoading: boolean;
+  progress?: number;
+  message?: string;
+  error?: string;
+}
+
+// Theme and Accessibility Types
+export interface ThemeConfig {
+  mode: 'light' | 'dark' | 'system';
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  font_size: 'small' | 'medium' | 'large';
+  high_contrast: boolean;
+  reduced_motion: boolean;
+}
+
+export interface AccessibilitySettings {
+  screen_reader: boolean;
+  keyboard_navigation: boolean;
+  high_contrast: boolean;
+  large_text: boolean;
+  reduced_motion: boolean;
+  focus_indicators: boolean;
+  alt_text_enabled: boolean;
+}
+
+// Multi-region and Failover Types
+export interface RegionConfig {
+  id: string;
+  name: string;
+  code: string;
+  primary: boolean;
+  supabase_url: string;
+  supabase_key: string;
+  latency_ms: number;
+  status: 'active' | 'maintenance' | 'offline';
+}
+
+export interface FailoverConfig {
+  enabled: boolean;
+  health_check_interval_seconds: number;
+  failover_threshold_ms: number;
+  auto_recovery: boolean;
+  notification_enabled: boolean;
+}
+
 // All types are exported above with their individual export statements
 // This provides better IDE support and avoids export conflicts

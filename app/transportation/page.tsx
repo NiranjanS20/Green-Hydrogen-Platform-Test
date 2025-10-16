@@ -58,7 +58,7 @@ export default function TransportationPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email?: string; role?: string } | null>(null);
   const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
   const { isOpen: isDeliveryOpen, onOpen: onDeliveryOpen, onClose: onDeliveryClose } = useDisclosure();
   const [selectedRoute, setSelectedRoute] = useState<TransportRoute | null>(null);
@@ -88,9 +88,21 @@ export default function TransportationPage() {
   const loadData = async () => {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      setUser(currentUser);
       
       if (currentUser) {
+        // Get user profile to check role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, admin_status')
+          .eq('id', currentUser.id)
+          .single();
+        
+        setUser({ 
+          ...currentUser, 
+          role: profile?.role,
+          admin_status: profile?.admin_status 
+        });
+        
         await loadRoutes();
         await loadMetrics();
       }
@@ -110,6 +122,7 @@ export default function TransportationPage() {
         .from('transport_routes')
         .select('*')
         .eq('user_id', user.id)
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -313,11 +326,27 @@ export default function TransportationPage() {
 
   const startDelivery = async (route: TransportRoute) => {
     try {
+      // Check if user is admin
+      if (user?.role !== 'admin' || user?.admin_status !== 'active') {
+        alert('Only authorized admins can start transport routes. Please contact an administrator.');
+        return;
+      }
+
+      // Check if vehicle is filled (at least 70% capacity)
+      const loadAmount = parseFloat(deliveryDetails.load_kg) || 0;
+      const minLoad = route.capacity_kg * 0.7;
+      
+      if (loadAmount < minLoad) {
+        alert(`Vehicle must be filled to at least 70% capacity (${minLoad} kg) before starting transport.`);
+        return;
+      }
+
       const { error } = await supabase
         .from('transport_routes')
         .update({ 
           status: 'in_transit',
-          current_load_kg: parseFloat(deliveryDetails.load_kg) || route.capacity_kg * 0.8,
+          current_load_kg: loadAmount,
+          vehicle_filled: true,
           progress_percent: 5,
           updated_at: new Date().toISOString()
         })
@@ -787,15 +816,20 @@ export default function TransportationPage() {
                               {route.status === 'scheduled' && (
                                 <Button
                                   size="sm"
-                                  color="primary"
-                                  variant="flat"
+                                  color={user?.role === 'admin' && user?.admin_status === 'active' ? 'primary' : 'default'}
+                                  variant={user?.role === 'admin' && user?.admin_status === 'active' ? 'flat' : 'bordered'}
                                   onPress={() => {
+                                    if (user?.role !== 'admin' || user?.admin_status !== 'active') {
+                                      alert('Only authorized admins can start transport routes.');
+                                      return;
+                                    }
                                     setSelectedRoute(route);
                                     onDeliveryOpen();
                                   }}
                                   startContent={<Play className="w-4 h-4" />}
+                                  isDisabled={user?.role !== 'admin' || user?.admin_status !== 'active'}
                                 >
-                                  Start
+                                  {user?.role === 'admin' && user?.admin_status === 'active' ? 'Start' : 'Admin Only'}
                                 </Button>
                               )}
                               {route.status === 'in_transit' && (

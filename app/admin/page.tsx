@@ -20,6 +20,13 @@ interface AdminData {
   transport: Record<string, unknown>[];
   users: Record<string, unknown>[];
   pendingAdmins: Record<string, unknown>[];
+  pendingApprovals: {
+    production: Record<string, unknown>[];
+    storage: Record<string, unknown>[];
+    renewable: Record<string, unknown>[];
+    transport: Record<string, unknown>[];
+  };
+  alerts: Record<string, unknown>[];
   totalStats: {
     totalProduction: number;
     totalStorage: number;
@@ -27,6 +34,7 @@ interface AdminData {
     totalUsers: number;
     totalFacilities: number;
     totalEnergyProduced: number;
+    pendingApprovals: number;
   };
 }
 
@@ -43,13 +51,21 @@ export default function AdminPage() {
     transport: [],
     users: [],
     pendingAdmins: [],
+    pendingApprovals: {
+      production: [],
+      storage: [],
+      renewable: [],
+      transport: []
+    },
+    alerts: [],
     totalStats: {
       totalProduction: 0,
       totalStorage: 0,
       totalRenewable: 0,
       totalUsers: 0,
       totalFacilities: 0,
-      totalEnergyProduced: 0
+      totalEnergyProduced: 0,
+      pendingApprovals: 0
     }
   });
 
@@ -162,14 +178,48 @@ export default function AdminPage() {
       if (pendingError) console.error('Pending admins error:', pendingError);
       console.log('Pending admins:', pendingAdmins);
 
+      // Load pending facility approvals
+      const { data: pendingProduction } = await supabase
+        .from('production_facilities')
+        .select('*, profiles!production_facilities_user_id_fkey(full_name, email)')
+        .eq('approval_status', 'pending');
+
+      const { data: pendingStorage } = await supabase
+        .from('storage_facilities')
+        .select('*, profiles!storage_facilities_user_id_fkey(full_name, email)')
+        .eq('approval_status', 'pending');
+
+      const { data: pendingRenewable } = await supabase
+        .from('renewable_sources')
+        .select('*, profiles!renewable_sources_user_id_fkey(full_name, email)')
+        .eq('approval_status', 'pending');
+
+      const { data: pendingTransport } = await supabase
+        .from('transport_routes')
+        .select('*, profiles!transport_routes_user_id_fkey(full_name, email)')
+        .eq('approval_status', 'pending');
+
+      // Load alerts
+      const { data: alerts } = await supabase
+        .from('alerts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
       // Calculate total stats
+      const pendingApprovalsCount = (pendingProduction?.length || 0) + 
+                                   (pendingStorage?.length || 0) + 
+                                   (pendingRenewable?.length || 0) + 
+                                   (pendingTransport?.length || 0);
+
       const totalStats = {
         totalProduction: production?.reduce((sum, f) => sum + (f.capacity_kg_per_day || 0), 0) || 0,
         totalStorage: storage?.reduce((sum, f) => sum + (f.capacity_kg || 0), 0) || 0,
         totalRenewable: renewable?.reduce((sum, f) => sum + (f.capacity_mw || 0), 0) || 0,
         totalUsers: users?.length || 0,
         totalFacilities: (production?.length || 0) + (storage?.length || 0),
-        totalEnergyProduced: renewable?.reduce((sum, f) => sum + (f.energy_produced_kwh || 0), 0) || 0
+        totalEnergyProduced: renewable?.reduce((sum, f) => sum + (f.energy_produced_kwh || 0), 0) || 0,
+        pendingApprovals: pendingApprovalsCount
       };
 
       setData({
@@ -179,6 +229,13 @@ export default function AdminPage() {
         transport: transport || [],
         users: users || [],
         pendingAdmins: pendingAdmins || [],
+        pendingApprovals: {
+          production: pendingProduction || [],
+          storage: pendingStorage || [],
+          renewable: pendingRenewable || [],
+          transport: pendingTransport || []
+        },
+        alerts: alerts || [],
         totalStats
       });
     } catch (error) {
@@ -307,6 +364,76 @@ export default function AdminPage() {
     }
   };
 
+  // Facility approval functions
+  const approveFacility = async (facilityId: string, tableName: string, facilityName: string) => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          approval_status: 'approved',
+          approved_by: currentUser.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', facilityId);
+
+      if (error) throw error;
+      
+      alert(`${facilityName} approved successfully!`);
+      loadAllData(); // Refresh data
+    } catch (error) {
+      console.error('Error approving facility:', error);
+      alert('Failed to approve facility');
+    }
+  };
+
+  const rejectFacility = async (facilityId: string, tableName: string, facilityName: string, reason?: string) => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          approval_status: 'rejected',
+          approved_by: currentUser.id,
+          approved_at: new Date().toISOString(),
+          rejection_reason: reason || 'No reason provided'
+        })
+        .eq('id', facilityId);
+
+      if (error) throw error;
+      
+      alert(`${facilityName} rejected`);
+      loadAllData(); // Refresh data
+    } catch (error) {
+      console.error('Error rejecting facility:', error);
+      alert('Failed to reject facility');
+    }
+  };
+
+  const authorizeTransportRoute = async (routeId: string) => {
+    try {
+      const { error } = await supabase
+        .from('transport_routes')
+        .update({ 
+          admin_authorized: true,
+          approval_status: 'approved'
+        })
+        .eq('id', routeId);
+
+      if (error) throw error;
+      
+      alert('Transport route authorized successfully!');
+      loadAllData(); // Refresh data
+    } catch (error) {
+      console.error('Error authorizing transport route:', error);
+      alert('Failed to authorize transport route');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
@@ -415,6 +542,14 @@ export default function AdminPage() {
             <Eye className="w-8 h-8 text-gray-600 mx-auto mb-2" />
             <h3 className="font-semibold">Total Users</h3>
             <p className="text-2xl font-bold text-gray-600">{data.totalStats.totalUsers}</p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody className="text-center">
+            <AlertTriangle className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+            <h3 className="font-semibold">Pending Approvals</h3>
+            <p className="text-2xl font-bold text-amber-600">{data.totalStats.pendingApprovals}</p>
           </CardBody>
         </Card>
       </div>
@@ -546,11 +681,186 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* Pending Admin Requests */}
-      {data.pendingAdmins.length > 0 && (
+      {/* Pending Facility Approvals */}
+      {data.totalStats.pendingApprovals > 0 && (
         <Card className="border-2 border-amber-200 bg-amber-50">
           <CardHeader>
             <h3 className="text-lg font-semibold text-amber-800 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Pending Facility Approvals ({data.totalStats.pendingApprovals})
+            </h3>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-6">
+              {/* Production Facilities */}
+              {data.pendingApprovals.production.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                    <Factory className="w-4 h-4" />
+                    Production Facilities ({data.pendingApprovals.production.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {data.pendingApprovals.production.map((facility: any) => (
+                      <div key={facility.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                        <div>
+                          <h5 className="font-semibold">{facility.name}</h5>
+                          <p className="text-sm text-gray-600">{facility.location} • {facility.electrolyzer_type}</p>
+                          <p className="text-xs text-gray-500">Capacity: {facility.capacity_kg_per_day} kg/day</p>
+                          <p className="text-xs text-gray-500">Requested by: {facility.profiles?.full_name || 'Unknown'}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => approveFacility(facility.id, 'production_facilities', facility.name)}
+                            color="success"
+                            size="sm"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button 
+                            onClick={() => rejectFacility(facility.id, 'production_facilities', facility.name)}
+                            color="danger"
+                            variant="bordered"
+                            size="sm"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Storage Facilities */}
+              {data.pendingApprovals.storage.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                    <Database className="w-4 h-4" />
+                    Storage Facilities ({data.pendingApprovals.storage.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {data.pendingApprovals.storage.map((facility: any) => (
+                      <div key={facility.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                        <div>
+                          <h5 className="font-semibold">{facility.name}</h5>
+                          <p className="text-sm text-gray-600">{facility.location} • {facility.storage_type}</p>
+                          <p className="text-xs text-gray-500">Capacity: {facility.capacity_kg} kg</p>
+                          <p className="text-xs text-gray-500">Requested by: {facility.profiles?.full_name || 'Unknown'}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => approveFacility(facility.id, 'storage_facilities', facility.name)}
+                            color="success"
+                            size="sm"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button 
+                            onClick={() => rejectFacility(facility.id, 'storage_facilities', facility.name)}
+                            color="danger"
+                            variant="bordered"
+                            size="sm"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Renewable Sources */}
+              {data.pendingApprovals.renewable.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Renewable Sources ({data.pendingApprovals.renewable.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {data.pendingApprovals.renewable.map((facility: any) => (
+                      <div key={facility.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                        <div>
+                          <h5 className="font-semibold">{facility.name}</h5>
+                          <p className="text-sm text-gray-600">{facility.location} • {facility.source_type}</p>
+                          <p className="text-xs text-gray-500">Capacity: {facility.capacity_mw} MW</p>
+                          <p className="text-xs text-gray-500">Requested by: {facility.profiles?.full_name || 'Unknown'}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => approveFacility(facility.id, 'renewable_sources', facility.name)}
+                            color="success"
+                            size="sm"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button 
+                            onClick={() => rejectFacility(facility.id, 'renewable_sources', facility.name)}
+                            color="danger"
+                            variant="bordered"
+                            size="sm"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Transport Routes */}
+              {data.pendingApprovals.transport.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-orange-700 mb-3 flex items-center gap-2">
+                    <Truck className="w-4 h-4" />
+                    Transport Routes ({data.pendingApprovals.transport.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {data.pendingApprovals.transport.map((route: any) => (
+                      <div key={route.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                        <div>
+                          <h5 className="font-semibold">{route.route_name}</h5>
+                          <p className="text-sm text-gray-600">{route.origin} → {route.destination}</p>
+                          <p className="text-xs text-gray-500">{route.distance_km} km • {route.transport_type}</p>
+                          <p className="text-xs text-gray-500">Requested by: {route.profiles?.full_name || 'Unknown'}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => authorizeTransportRoute(route.id)}
+                            color="success"
+                            size="sm"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Authorize
+                          </Button>
+                          <Button 
+                            onClick={() => rejectFacility(route.id, 'transport_routes', route.route_name)}
+                            color="danger"
+                            variant="bordered"
+                            size="sm"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Pending Admin Requests */}
+      {data.pendingAdmins.length > 0 && (
+        <Card className="border-2 border-red-200 bg-red-50">
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
               Pending Admin Requests ({data.pendingAdmins.length})
             </h3>

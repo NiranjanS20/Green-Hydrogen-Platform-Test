@@ -1,0 +1,86 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install npm-check-updates
+        run: npm install -g npm-check-updates
+        
+      - name: Check for updates
+        id: check-updates
+        run: |
+          UPDATES=$(ncu --jsonUpgraded)
+          echo "updates=$UPDATES" >> $GITHUB_OUTPUT
+          
+      - name: Update dependencies
+        if: steps.check-updates.outputs.updates != '{}'
+        run: |
+          ncu -u
+          npm install --legacy-peer-deps
+          
+      - name: Run tests after update
+        if: steps.check-updates.outputs.updates != '{}'
+        run: |
+          npm run test -- --watchAll=false
+          npm run build
+          
+      - name: Create Pull Request
+        if: steps.check-updates.outputs.updates != '{}'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: 'Automated Dependency Updates'
+          body: |
+            ## Dependency Updates
+            
+            This PR contains automated dependency updates:
+            
+            ```json
+            ${{ steps.check-updates.outputs.updates }}
+            ```
+            
+            ### Changes Made
+            - Updated package.json with latest compatible versions
+            - Ran tests to ensure compatibility
+            - Built application successfully
+            
+            ### Review Checklist
+            - [ ] Review updated dependencies
+            - [ ] Check for breaking changes
+            - [ ] Verify all tests pass
+            - [ ] Test critical functionality
+            
+            **Note:** This PR was created automatically. Please review carefully before merging.
+          branch: automated/dependency-updates
+          delete-branch: true
+          
+      - name: Notify team
+        if: steps.check-updates.outputs.updates != '{}'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#development'
+          text: '📦 Automated dependency update PR created'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -41,6 +41,7 @@ export default function ProductionPage() {
 
   const [lcohResult, setLcohResult] = useState<number | null>(null);
   const [dailyProduction, setDailyProduction] = useState<{[key: string]: number}>({});
+  const [dailyTargets, setDailyTargets] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -82,6 +83,13 @@ export default function ProductionPage() {
           if (recordsError) throw recordsError;
           setProductionRecords(recordsData || []);
         }
+
+        // Load daily production targets
+        const response = await fetch('/api/production/daily-targets');
+        if (response.ok) {
+          const targetsData = await response.json();
+          setDailyTargets(targetsData || []);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -98,6 +106,7 @@ export default function ProductionPage() {
         .from('production_facilities')
         .insert([{
           user_id: user.id,
+          approval_status: 'pending', // All new facilities need approval
           name: newFacility.name,
           location: newFacility.location,
           electrolyzer_type: newFacility.electrolyzer_type,
@@ -332,27 +341,36 @@ export default function ProductionPage() {
     }
   };
 
+  const updateDailyTarget = async (facilityId: string, actualProduction: number) => {
+    try {
+      await fetch('/api/production/daily-targets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facility_id: facilityId,
+          actual_production_kg: actualProduction
+        })
+      });
+    } catch (error) {
+      console.error('Error updating daily target:', error);
+    }
+  };
+
   const checkPerformanceAlerts = (facilitiesList: ProductionFacility[]) => {
     const newAlerts: Array<{id: string; type: 'warning' | 'error'; message: string}> = [];
-
+    
     facilitiesList.forEach(facility => {
       const efficiency = facility.efficiency_percent || 0;
       const capacity = facility.capacity_kg_per_day || 0;
 
-      if (efficiency < 60) {
-        newAlerts.push({
-          id: `eff-${facility.id}`,
-          type: 'error',
-          message: `${facility.name}: Efficiency critically low (${efficiency}%)`
-        });
-      } else if (efficiency < 70) {
+      if (efficiency < 65) {
         newAlerts.push({
           id: `eff-${facility.id}`,
           type: 'warning',
-          message: `${facility.name}: Efficiency below target (${efficiency}%)`
+          message: `${facility.name}: Low efficiency (${efficiency}%)`
         });
       }
-
+      
       if (capacity < 100) {
         newAlerts.push({
           id: `cap-${facility.id}`,

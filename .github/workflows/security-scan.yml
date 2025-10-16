@@ -1,0 +1,142 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'package*.json'
+      - '.github/workflows/security-scan.yml'
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Run npm audit
+        id: npm-audit
+        run: |
+          npm audit --json > audit-results.json || true
+          VULNERABILITIES=$(cat audit-results.json | jq '.metadata.vulnerabilities.total // 0')
+          echo "vulnerabilities=$VULNERABILITIES" >> $GITHUB_OUTPUT
+          
+      - name: Upload audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-audit-results
+          path: audit-results.json
+          
+      - name: Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --json-file-output=snyk-results.json
+          
+      - name: Upload Snyk results
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-results
+          path: snyk-results.json
+          
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'Green Hydrogen Platform'
+          path: '.'
+          format: 'JSON'
+          
+      - name: Upload OWASP results
+        uses: actions/upload-artifact@v3
+        with:
+          name: owasp-results
+          path: reports/
+          
+      - name: Create security report
+        run: |
+          echo "# Security Scan Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## NPM Audit Results" >> security-report.md
+          echo "Total vulnerabilities found: ${{ steps.npm-audit.outputs.vulnerabilities }}" >> security-report.md
+          echo "" >> security-report.md
+          
+          if [ -f snyk-results.json ]; then
+            echo "## Snyk Scan Results" >> security-report.md
+            echo "Snyk scan completed. Check artifacts for detailed results." >> security-report.md
+            echo "" >> security-report.md
+          fi
+          
+          echo "## OWASP Dependency Check" >> security-report.md
+          echo "OWASP dependency check completed. Check artifacts for detailed results." >> security-report.md
+          
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.md
+          
+      - name: Create issue for high vulnerabilities
+        if: steps.npm-audit.outputs.vulnerabilities > 0
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const vulnerabilities = ${{ steps.npm-audit.outputs.vulnerabilities }};
+            
+            if (vulnerabilities > 0) {
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Security Alert: ${vulnerabilities} vulnerabilities found`,
+                body: `## Security Vulnerabilities Detected
+                
+                Our automated security scan has detected **${vulnerabilities}** vulnerabilities in the project dependencies.
+                
+                ### Action Required
+                - [ ] Review the security scan results in the workflow artifacts
+                - [ ] Update vulnerable dependencies
+                - [ ] Test the application after updates
+                - [ ] Deploy security fixes
+                
+                ### Scan Details
+                - **Date**: ${new Date().toISOString()}
+                - **Workflow**: [Security Scan](${context.payload.repository.html_url}/actions/runs/${context.runId})
+                - **Artifacts**: Check the workflow run for detailed reports
+                
+                ### Priority
+                ${vulnerabilities > 10 ? '🔴 **HIGH PRIORITY**' : vulnerabilities > 5 ? '🟡 **MEDIUM PRIORITY**' : '🟢 **LOW PRIORITY**'}
+                
+                This issue was created automatically by our security monitoring system.`,
+                labels: ['security', 'dependencies', 'automated']
+              });
+            }
+            
+      - name: Notify security team
+        if: steps.npm-audit.outputs.vulnerabilities > 5
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#security'
+          text: |
+            🚨 **Security Alert**: ${{ steps.npm-audit.outputs.vulnerabilities }} vulnerabilities found in Green Hydrogen Platform
+            
+            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
