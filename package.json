@@ -2,6 +2,10 @@
   "name": "green-hydrogen-platform",
   "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": "18.x",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +16,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "analyze": "cross-env ANALYZE=true next build",
-    "vercel-build": "npm install --legacy-peer-deps && next build",
+    "vercel-build": "next build",
     "db:generate": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > types/supabase.ts",
     "db:reset": "supabase db reset",
     "db:migrate": "supabase migration up"
